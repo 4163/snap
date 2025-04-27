@@ -91,6 +91,7 @@ Singe File - DOM
 	Copy and run snap.py to whatever you want to create a file list of.
 
 // WIP
-snap-script.js settings / structure
-file type icons customization
-other things of note too tired to remember rn
+snap-script.js settings / structure,
+file type icons customization,
+other things of note too tired to remember rn,
+readme md formatting.
