@@ -1,9 +1,10 @@
 Take a snapshot/create a copy of your folders/files (file list) and turn it into a navigatable HTML file list.
 
 Made specifically for my personal use on Windows systems. There are no plans to support other operating systems.
-Do not rename 'snap.py' when using to avoid having snap.py in your file list output.
 
-The snap.py scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the snap-script.js file is beautifully written, it's awful.
+The snap.py scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the snap-script.js files are beautifully written, they are awful.
+
+Do not rename 'snap.py' when using to avoid having snap.py in your file list output.
 
 Multi Page - JSON
 - Recommended for public websites, has good performance and maintainability
