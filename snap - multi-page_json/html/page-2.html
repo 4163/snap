@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>snap page 2</title>
+    <link rel="icon" type="image/png" href="icon-favicon.png">
+    <meta name="jsonPath" content="directories_b.json">
+    <meta name="jsonVersion" content="250427.0654">
+    <link rel="stylesheet" href="snap-style.css">
+    <script src="snap-script.js"></script>
+</head>
+<body class="directory">
+    <input id="search" class="regex-search" type="text" placeholder="Search" autocomplete="off" list="search-patterns">
+    <datalist id="search-patterns">
+      <option value=">* ">
+      <option value=">*file ">
+      <option value=">*folder ">
+    </datalist>
+    <div id="wrapper">
+      <div class="drive">
+        <a href="page-1.html">snap page 1</a>
+        <a href="page-2.html" class="active">snap page 2</a>
+      </div>
+      <div class="header">
+        <h1>
+          Hoi Yurie E:/Hocchan Union Archive
+        </h1>
+        <span>609 files in 75 folders (89.25 GB)</span>
+        <span class="info">Generated with <a href="https://github.com/4163/snap" target="_blank">snap</a> at 27/04/2025 06:54 AM</span>
+        <span class="info">Search patterns:</span>
+        <div class="info">
+          <span>Everything: [ >* item-name ]</span>
+          <span>Folders only: [ >*folder item-name ]</span>
+          <span>Files only: [ >*file item-name ]</span>
+        </div>
+      </div>
+      <div class="sliders">
+        <div>
+          <label>
+            <input type="checkbox" class="date-toggle" id="date-toggle" name="date-toggle">
+            <span class="slider" id="slider-date"></span>
+          </label>
+          <span>Show date modified</span>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" class="size-toggle" id="size-toggle" name="size-toggle">
+            <span class="slider" id="slider-size"></span>
+          </label>
+          <span>Show file size</span>
+        </div>
+      </div> 
+      <h1 class="directory-path">
+        <a href="/">~</a> / 
+      </h1>
+      <ul id="files" class="view-tiles" data-path="root">
+        <li><a href="Events" class="icon icon-directory" title="Events"><span class="name">Events</span><span class="date">28/03/2025 06:45 AM</span><span class="size">38.52 GB</span></a></li>
+        <li><a href="FC Events" class="icon icon-directory" title="FC Events"><span class="name">FC Events</span><span class="date">02/03/2025 01:31 PM</span><span class="size">17.20 GB</span></a></li>
+        <li><a href="Others" class="icon icon-directory" title="Others"><span class="name">Others</span><span class="date">28/03/2025 06:50 AM</span><span class="size">31.05 GB</span></a></li>
+        <li><a href="VNs／Games" class="icon icon-directory" title="VNs／Games"><span class="name">VNs／Games</span><span class="date">28/03/2025 06:08 AM</span><span class="size">2.48 GB</span></a></li>
+      </ul>
+    </div>
+</body>
+</html>

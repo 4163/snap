@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>snap page 1</title>
+    <link rel="icon" type="image/png" href="icon-favicon.png">
+    <link rel="stylesheet" href="snap-style.css">
+    <script src="snap-script.js"></script>
+</head>
+<body class="directory">
+    <input id="search" class="regex-search" type="text" placeholder="Search" autocomplete="off" list="search-patterns">
+    <datalist id="search-patterns">
+      <option value=">* ">
+      <option value=">*file ">
+      <option value=">*folder ">
+    </datalist>
+    <div id="wrapper">
+      <div class="drive">
+        <a href="page-1.html" class="active">snap page 1</a>
+        <a href="page-2.html">snap page 2</a>
+      </div>
+      <div class="header">
+        <h1>
+          Kiriki Alice F:/Hocchan Union Archive
+        </h1>
+        <span>43872 files in 1852 folders (525.00 GB)</span>
+        <span class="info">Generated with <a href="https://github.com/4163/snap" target="_blank">snap</a> at 27/04/2025 07:40 AM</span>
+        <span class="info">Search patterns:</span>
+        <div class="info">
+          <span>Everything: [ >* item-name ]</span>
+          <span>Folders only: [ >*folder item-name ]</span>
+          <span>Files only: [ >*file item-name ]</span>
+        </div>
+      </div>
+      <div class="sliders">
+        <div>
+          <label>
+            <input type="checkbox" class="date-toggle" id="date-toggle" name="date-toggle">
+            <span class="slider" id="slider-date"></span>
+          </label>
+          <span>Show date modified</span>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" class="size-toggle" id="size-toggle" name="size-toggle">
+            <span class="slider" id="slider-size"></span>
+          </label>
+          <span>Show file size</span>
+        </div>
+      </div>      
+      <h1 class="directory-path">
+        <a href="/">~</a> / 
+      </h1>
+      <ul id="files" class="view-tiles" data-path="root">
+        <li><a href="Albums" class="icon icon-directory" title="Albums"><span class="name">Albums</span><span class="date">28/02/2025 08:35 PM</span><span class="size">22.80 GB</span></a></li>
+        <li><a href="Anime" class="icon icon-directory" title="Anime"><span class="name">Anime</span><span class="date">28/03/2025 06:32 AM</span><span class="size">30.62 GB</span></a></li>
+        <li><a href="Anime OP-ED-INs" class="icon icon-directory" title="Anime OP-ED-INs"><span class="name">Anime OP-ED-INs</span><span class="date">28/02/2025 03:25 PM</span><span class="size">5.73 GB</span></a></li>
+        <li><a href="Contributions" class="icon icon-directory" title="Contributions"><span class="name">Contributions</span><span class="date">28/03/2025 06:43 AM</span><span class="size">99.93 GB</span></a></li>
+        <li><a href="DVDs／BDs" class="icon icon-directory" title="DVDs／BDs"><span class="name">DVDs／BDs</span><span class="date">28/02/2025 03:31 PM</span><span class="size">43.02 GB</span></a></li>
+        <li><a href="Gamerips" class="icon icon-directory" title="Gamerips"><span class="name">Gamerips</span><span class="date">28/03/2025 06:46 AM</span><span class="size">6.87 GB</span></a></li>
+        <li><a href="Lives" class="icon icon-directory" title="Lives"><span class="name">Lives</span><span class="date">28/03/2025 06:30 AM</span><span class="size">227.43 GB</span></a></li>
+        <li><a href="PVs" class="icon icon-directory" title="PVs"><span class="name">PVs</span><span class="date">28/03/2025 06:54 AM</span><span class="size">5.29 GB</span></a></li>
+        <li><a href="Pictures" class="icon icon-directory" title="Pictures"><span class="name">Pictures</span><span class="date">28/03/2025 06:51 AM</span><span class="size">10.93 GB</span></a></li>
+        <li><a href="SNS" class="icon icon-directory" title="SNS"><span class="name">SNS</span><span class="date">28/03/2025 06:59 AM</span><span class="size">60.47 GB</span></a></li>
+        <li><a href="Singles" class="icon icon-directory" title="Singles"><span class="name">Singles</span><span class="date">28/02/2025 04:53 PM</span><span class="size">5.04 GB</span></a></li>
+        <li><a href="TV-Variety" class="icon icon-directory" title="TV-Variety"><span class="name">TV-Variety</span><span class="date">28/03/2025 06:59 AM</span><span class="size">6.85 GB</span></a></li>
+        <li><a href="Tracks" class="icon icon-directory" title="Tracks"><span class="name">Tracks</span><span class="date">28/02/2025 05:29 PM</span><span class="size">21.16 MB</span></a></li>
+      </ul>
+      <script id="dom-cache" type="application/json"></script>
+	</div>
+</body>
+</html>
