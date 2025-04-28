@@ -1,16 +1,55 @@
 import os
 import json
-import win32api
 import time
-import sys
 import threading
 from datetime import datetime
-from tqdm import tqdm  # Import tqdm for progress bars
+
+import subprocess
+import sys
+
+def ensure_package(import_name, pip_name=None):
+    if pip_name is None:
+        pip_name = import_name
+    try:
+        __import__(import_name)
+        return False  # No installation needed
+    except ImportError:
+        confirmation = input(f"{pip_name} not found. Install it? (y/n): ")
+        if confirmation.lower() != 'y':
+            print(f"Cannot continue without {pip_name}. Exiting. Press 'Enter' to exit.")
+            input()
+            sys.exit(1)
+            
+        print(f"Installing {pip_name}...")
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "--quiet", pip_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return True  # Installation was needed
+
+# Track if anything was installed
+installed_anything = False
+
+installed_anything |= ensure_package('tqdm')
+installed_anything |= ensure_package('win32api', 'pywin32')
+
+# If we installed anything, ask the user to rerun
+if installed_anything:
+    input("\nInstallation complete. Please run the script again.\nPress 'Enter' to exit.")
+    sys.exit()
+
+# Now safe to import
+from tqdm import tqdm
+import win32api
+
+# Use default icon preset for undefined file types
+USE_DEFAULT_PRESET = True
 
 # Define preset icons for different file types
 ICON_PRESETS = {
-    'default': ['accurip', 'ass', 'bin', 'cfg', 'cue', 'm2ts', 'm3u', 'iso', 'ISO', 'mds', 'MDS'],
-    'video': ['avi', 'f4v', 'flv', 'm4v', 'mkv', 'mov', 'mp4', 'MP4', 'mpg', 'rmvb', 'ts', 'vob', 'VOB', 'webm', 'wmv'],
+    'default': ['accurip', 'ass', 'bin', 'cfg', 'cue', 'm3u', 'iso', 'ISO', 'mds', 'MDS', 'xspf'],
+    'video': ['avi', 'f4v', 'flv', 'm4v', 'mkv', 'mov', 'mp4', 'MP4', 'mpg', 'rmvb', 'ts', 'vob', 'VOB', 'webm', 'wmv', 'm2ts'],
     'image': ['bmp', 'gif', 'jfif', 'jpeg', 'jpg', 'JPG', 'png', 'ico', 'webp'],
     'text': ['log', 'nfo', 'txt'],
     'text-html': ['html', 'mhtml', 'css'],
@@ -20,12 +59,13 @@ ICON_PRESETS = {
     'application-pdf': ['pdf'],
     'application-javascript': ['js'],
     'application-x-7z-compressed': ['7z', 'zip', 'rar'],
-    'application-x-shockwave-flash': ['swf']
+    'application-x-shockwave-flash': ['swf'],
 }
 
+# Keep as false to keep file size low
 JSON_OUTPUT = {
-    'keep_raw_date': False,  # Set to True to keep unformatted date in JSON output
-    'keep_raw_size': False,  # Set to True to keep unformatted size in JSON output
+    'keep_raw_date': False,
+    'keep_raw_size': False
 }
 
 def get_icon_preset(extension):
@@ -33,7 +73,7 @@ def get_icon_preset(extension):
     for preset, extensions in ICON_PRESETS.items():
         if extension in extensions:
             return f'icon-{preset}'
-    return ''  # No preset for other file types
+    return 'icon-default' if USE_DEFAULT_PRESET else ''  # Use default preset based on setting
 
 def get_directory_size(path, excluded_files=None):
     """Calculate total size of a directory including all subdirectories"""

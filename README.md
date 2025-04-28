@@ -82,13 +82,28 @@ Multi Page - DOM
 	I have provided '_empty-script-block.html' files which contains empty script blocks for this purpose.
 
 Singe File - DOM
-- Recommended to used for offline snapshots/archives of your file list. 
+- Recommended to be used for offline snapshots/archives of your file list. 
 - Not recommended to be used for public websites, less performance and close to zero maintanability/customization.
 
 - Requires JavaScript.
 
 1.
 	Copy and run snap.py to whatever you want to create a file list of.
+
+Others
+
+Each file format needs to be defined in the snap.py script under the ICON_PRESETS dictionary on top (case sensitive).
+
+By default any file format not defined will have no icon or can be set use the default icon. This can be changed in the snap.py script under the USE_DEFAULT_PRESET variable.
+
+CSS:
+Feel free to edit or mess the CSS/HTML stylings but keep the necessary IDs, classes, and data variables used.
+
+To use custom icons for specific file formats you can edit the snap-style.css file.
+Add a new icon type under the /*hocchan union archive*/ comment.
+
+Afterwards define a new icon type with the file formats it will use. This can be done in snap.py under the ICON_PRESETS dictionary.
+'X' is defined as the 'icon-X' defined in snap-style.css with 'icon-' part omitted.
 
 // WIP
 snap-script.js settings / structure,
