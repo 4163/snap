@@ -125,4 +125,4 @@ And `B` is the file format(s) that will use that icon preset.
 By default any file format not defined will have no icon or can be set to use the default icon preset. This can be done in the `📄snap.py` script by changing the `USE_DEFAULT_PRESET` variable to true.  
 ![json version](https://i.imgur.com/osw8i9Z.png)
 
-If you somehow want to edit the HTML/CSS/JS for the *snap Single File - DOM version* (why, just why). The CSS is minfied, just beautify it. And the JS is encoded as Base64, decode that and then beautify it as that's also minfied.
+If you somehow want to edit the HTML/CSS/JS for the *snap Single File - DOM version* (why). The CSS is minfied, just beautify it. And the JS is encoded as Base64, decode that and then beautify it as that's also minfied.
