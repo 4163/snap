@@ -1,112 +1,128 @@
-Take a snapshot/create a copy of your folders/files (file list) and turn it into a navigatable HTML file list.
+# snap
+## _Create an HTML copy of your file list_
+Take a snapshott folders/files and turn it into a navigatable HTML file list.
 
 Made specifically for my personal use on Windows systems. There are no plans to support other operating systems.
 
-The snap.py scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the snap-script.js files are beautifully written, they are awful.
+The `📄snap.py` scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the `📄snap-script.js` files are beautifully written, they are awful.
 
-Do not rename 'snap.py' when using to avoid having snap.py in your file list output.
+Do not rename `📄snap` when using to avoid having snap.py in listed your file list output.
 
-Multi Page - JSON
+`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
+
+
+[Multi Page - JSON](#multi-page---json)
+[Multi Page - DOM](#multi-page---dom)
+[Single File - DOM](#single-file---dom)
+
+### Multi Page - JSON
 - Recommended for public websites, has good performance and maintainability
-
 - Requires the use of a server because CORS policy blocks JSON fetches.
 - Requires JavaScript.
 - (Optional) Access to IdexedDB or In-Memory Cache.
 
-1.
-	Copy and run snap.py to wherever/whatever you want to create a file list of.
-	It will ask if you want to minfy the JS file, choose whichever you prefer (minified JS is smaller in size).
-	After running and going through the setup, this will generate your JSON file and snap.html which has HTML snippets.
+##### 1. Generate JSON and HTML snippets:
+**a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.
+**b.** It will ask if you want to minfy the JS file, choose whichever you prefer (minified JS is smaller in size).
+**c.** After running and going through the setup, this will generate your `📄JSON` file and `📄snap.html` which has HTML snippets.
 
-2.
-	Define JSON file location in the HTML head via a meta element:
-	<meta name="jsonPath" content="directories_a.json">,
-	<meta name="jsonPath" content="directories_b.json"> etc.
+##### 2. For your individual snap pages:
+**a.** Define JSON file location in the HTML head via a `meta` element.
+![json file location](https://i.imgur.com/V6yTKih.png)
 
-	If no JSON file location is defined, snap will use a fallback JSON file. In this case directories.json.
+If no JSON file location is defined, the page will use a fallback JSON file (in this case `📄directories.json` is defined as the fallback in `📄snap-script.js` under object `CONFIG`), so be sure to set a `jsonPath`.
+![json file location](https://i.imgur.com/z3S6F04.png)
 
-3.
-	Define the JSON version in the head via a meta element:
-	<meta name="jsonVersion" content="250402.1021">
+**b.** Define the JSON version in the head via a `meta` element.
+![json version](https://i.imgur.com/TSY4f9s.png)
 
-	The JSON version can be found at the generated snap.html.
+The JSON version can be found at the generated `📄snap.html`.
 
-If a JSON verion is defined it will;
-	Compare the meta JSON version with the JSON file used.
-		a. If the JSON versions are identical, prevent fetching the JSON file on page load.
-		b. If the JSON versions are NOT identical keep fetching the JSON file on page load.
-		c. Loop.
-		
-If a JSON verion is NOT defined it will;
-	Keep fetching the JSON file on page load.
+**c.** Repalce the entire `<div class="header">...</div>` block from your page.
+![html header](https://i.imgur.com/3eRewHH.png)
+
+This can be found at the generated `📄snap.html`.
+
+**d.** Repalce the entire `<ul id="files" class="view-tiles" data-path="root">...</ul>` block from your page.
+![html ul](https://i.imgur.com/sI2L4Fy.png)
+
+Again, this can be found at the generated `📄snap.html`.
 	
-Directory caching process:
-	a. Once JSON is fetched tries to save JSON data in IndexedDB and uses that for subsequent navigations;
-	b. If IndexedDB cannot be accessed use In-Memory Cache for subsequent navigations.
-	C. If In-Memory Cache fails, do fetch requests to the JSON file for every action (Very slow).
+##### If a JSON verion is defined:
+- Compare the meta `jsonVersion` with the `📄JSON` file used.
+- If the JSON versions are identical, prevent fetching the `📄JSON` file on page load.
+- If the JSON versions are NOT identical keep fetching the `📄JSON` file on page load.
+- Loop.
 
-4.
-	Repalce the entire <div class="header">contents...</content> block from your page.
+##### If a JSON verion is NOT defined:
+- Keep fetching the `📄JSON` file on page load.
+    
+##### Directory caching process:
+- Once `📄JSON` is fetched tries to save JSON data in IndexedDB and uses that for subsequent navigations;
+- If IndexedDB cannot be accessed use In-Memory Cache for subsequent navigations.
+- If In-Memory Cache fails, do fetch requests to the `📄JSON` file for every action/navigation (Very slow).
 
-	This can be found at the generated snap.html.
-
-5. Repalce the entire <ul id="files" class="view-tiles" data-path="root">contents...</ul> block from your page.
-
-	This can be found at the generated snap.html.
-
-Multi Page - DOM
+### Multi Page - DOM
 - Can be used for public websites, a bit easier to setup and maintain with less performance
 - If database/file list is big (html file size of a few megabytes), page may load slow or freeze for a bit on page load.
-
 - Requires JavaScript.
 - (Optional) Access to In-Memory Cache.
 
-1.
-	Copy and run snap.py to wherever/whatever you want to create a file list of.
-	After running your snap.html which has HTML snippets.
+##### 1. Generate HTML snippet:
+**a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.
+**b.** After running this will generate your `📄snap.html` which has HTML snippets.
 
-2.
-	Repalce the entire <div class="header">contents...</content> block from your page.
+##### 2. For your individual snap pages:
+**a.** Repalce the entire `<div class="header">...</div>` block from your page.
+![html header](https://i.imgur.com/7OoFk1S.png)
 
-	This can be found at the generated snap.html.
+This can be found at the generated `📄snap.html`.
 
-3. Repalce the entire <ul id="files" class="view-tiles" data-path="root">contents...</ul> block from your page.
+**b.** Repalce the entire `<ul id="files" class="view-tiles" data-path="root">...</ul>` block from your page.
+![html ul](https://i.imgur.com/5nTlnbO.png)
 
-	This can be found at the generated snap.html.
+This can be found at the generated `📄snap.html`.
 
-4. Repalce the entire <script id="dom-cache" type="application/json"></script> block from your page.
+**c.** Repalce the entire `<script id="dom-cache" type="application/json">...</script>` block from your page.
+![html dom cache/json](https://i.imgur.com/bheLy1k.png)
 
-	This can be found at the generated snap.html.
+Again, this can be found at the generated `📄snap.html`.
 
-	Notice that depending on your text/code editor of choice these contains thousands of text/lines.
-	I have provided '_empty-script-block.html' files which contains empty script blocks for this purpose.
+*Notice that depending on your text/code editor of choice these contains thousands of text/lines.
+I have provided `📄_empty-script-block.html` files which contains empty script blocks for this purpose.*
+![json version](https://i.imgur.com/Io2Ru9o.png)
 
-Singe File - DOM
+![json version](https://i.imgur.com/TTzumaR.png)
+
+##### Directory caching process:
+- If In-Memory Cache fails, script reads from  `<script id="dom-cache" type="application/json">...</script>` for every action/navigation.
+
+### Singe File - DOM
 - Recommended to be used for offline snapshots/archives of your file list. 
 - Not recommended to be used for public websites, less performance and close to zero maintanability/customization.
-
 - Requires JavaScript.
 
-1.
-	Copy and run snap.py to whatever you want to create a file list of.
+##### Generate HTML file list
+**-** Copy and run `📄snap.py` to whatever you want to create a file list of.
 
-Others
+##### Directory caching process:
+- If In-Memory Cache fails, script reads from  `<script id="dom-cache" type="application/json">...</script>` for every action/navigation.
 
-Each file format needs to be defined in the snap.py script under the ICON_PRESETS dictionary on top (case sensitive).
-
-By default any file format not defined will have no icon or can be set use the default icon. This can be changed in the snap.py script under the USE_DEFAULT_PRESET variable.
-
-CSS:
+### Others
 Feel free to edit or mess the CSS/HTML stylings but keep the necessary IDs, classes, and data variables used.
 
-To use custom icons for specific file formats you can edit the snap-style.css file.
-Add a new icon type under the /*hocchan union archive*/ comment.
+##### Custom icons:
+On `📄snap-style.css` add a new icon type under the `/*hocchan union archive*/` comment;
+![json version](https://i.imgur.com/hHoQoLy.png)
 
-Afterwards define a new icon type with the file formats it will use. This can be done in snap.py under the ICON_PRESETS dictionary.
-'X' is defined as the 'icon-X' defined in snap-style.css with 'icon-' part omitted.
+On `📄snap.py` under the `ICON_PRESETS` dictionary define a new icon type with the file formats it will use;
+![json version](https://i.imgur.com/yROWc6n.png)
 
-// WIP
-snap-script.js settings / structure,
-file type icons customization,
-other things of note too tired to remember rn,
-readme md formatting.
+`'A': ['B'],`
+`'A'` is the `'icon-A'` defined in `📄snap-style.css` with the `icon-` part omitted.
+And `B` is the file format(s) that will use that icon preset.
+
+By default any file format not defined will have no icon or can be set use the default icon. This can be done in the `📄snap.py` script by changing the `USE_DEFAULT_PRESET` variable to true.
+![json version](https://i.imgur.com/osw8i9Z.png)
+
+If you somehow want to edit the HTML/CSS/JS in the snap Single File - DOM versions (why, just why). The CSS is minfied, just beautify it. And the JS is encoded as Base64, decode that and then beautify it as that's also minfied.

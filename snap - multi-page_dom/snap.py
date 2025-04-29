@@ -3,63 +3,61 @@ import json
 import time
 import threading
 from datetime import datetime
-
 import subprocess
 import sys
 
 def ensure_package(import_name, pip_name=None):
-    if pip_name is None:
-        pip_name = import_name
-    try:
-        __import__(import_name)
-        return False  # No installation needed
+    if pip_name is None: pip_name = import_name
+    try: __import__(import_name); return False
     except ImportError:
         confirmation = input(f"{pip_name} not found. Install it? (y/n): ")
         if confirmation.lower() != 'y':
             print(f"Cannot continue without {pip_name}. Exiting. Press 'Enter' to exit.")
-            input()
-            sys.exit(1)
-            
+            input(); sys.exit(1)
         print(f"Installing {pip_name}...")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "--quiet", pip_name],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        return True  # Installation was needed
-
-# Track if anything was installed
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", pip_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    
 installed_anything = False
-
 installed_anything |= ensure_package('tqdm')
 installed_anything |= ensure_package('win32api', 'pywin32')
 
-# If we installed anything, ask the user to rerun
 if installed_anything:
     input("\nInstallation complete. Please run the script again.\nPress 'Enter' to exit.")
     sys.exit()
 
-# Now safe to import
 from tqdm import tqdm
 import win32api
+
+###########################################################################################
+
+# Generates a txt file that for file formats that aren't defined
+LOG_UNDEFINED_FORMATS = False
 
 # Use default icon preset for undefined file types
 USE_DEFAULT_PRESET = True
 
 # Define preset icons for different file types
 ICON_PRESETS = {
-    'default': ['accurip', 'ass', 'bin', 'cfg', 'cue', 'm3u', 'iso', 'ISO', 'mds', 'MDS', 'xspf'],
-    'video': ['avi', 'f4v', 'flv', 'm4v', 'mkv', 'mov', 'mp4', 'MP4', 'mpg', 'rmvb', 'ts', 'vob', 'VOB', 'webm', 'wmv', 'm2ts'],
-    'image': ['bmp', 'gif', 'jfif', 'jpeg', 'jpg', 'JPG', 'png', 'ico', 'webp'],
-    'text': ['log', 'nfo', 'txt'],
-    'text-html': ['html', 'mhtml', 'css'],
-    'lossy': ['m4a', 'mp3', 'opus', 'wma', 'Mp3'],
-    'lossless': ['flac'],
-    'lossless-alt': ['wav', 'ape', 'ogg'],
+    'default': ['accurip', 'ass', 'bin', 'cfg', 'cue', 'm3u', 'iso', 'mds', 'xspf', 'ani', 'cur', 'eot', 'inf', 'moc', 'sample', 'scr', 'skel', 'ttf', 'woff', 'woff2'],
+    'video': ['avi', 'f4v', 'flv', 'm4v', 'mkv', 'mov', 'mp4', 'mpg', 'rmvb', 'ts', 'vob', 'webm', 'wmv', 'm2ts'],
+    'image': ['bmp', 'gif', 'jfif', 'jpeg', 'jpg', 'png', 'ico', 'webp', 'svg'],
+    'text': ['log', 'nfo', 'txt', 'csv'],
+    'text-html': ['html', 'mhtml', 'css', 'json', 'py'],
     'application-pdf': ['pdf'],
     'application-javascript': ['js'],
     'application-x-7z-compressed': ['7z', 'zip', 'rar'],
     'application-x-shockwave-flash': ['swf'],
+    'bat': ['bat'],
+    'docx': ['docx'],
+    'xlsx': ['xlsx'],
+    'db': ['db'],
+    'exe': ['exe'],
+    'ini': ['ini'],
+
+    'lossy': ['m4a', 'mp3', 'opus', 'wma'],
+    'lossless': ['flac'],
+    'lossless-alt': ['wav', 'ape', 'ogg'],
 }
 
 # Keep as false to keep file size low
@@ -68,11 +66,35 @@ JSON_OUTPUT = {
     'keep_raw_size': False
 }
 
+###########################################################################################
+
+# Set to store unique file extensions without icons
+missing_icons = set()
+
+def log_missing_icon(extension):
+    """Add a file extension to the set of missing icons"""
+    if extension:
+        missing_icons.add(extension)
+
+def write_missing_icons_log():
+    """Write all missing icon extensions to a text file"""
+    if not missing_icons:
+        return
+        
+    with open('undefined_formats.txt', 'w', encoding='utf-8') as f:
+        for ext in sorted(missing_icons):
+            f.write(f"{ext}\n")
+
 def get_icon_preset(extension):
     """Determine the icon preset for a given file extension"""
     for preset, extensions in ICON_PRESETS.items():
-        if extension in extensions:
-            return f'icon-{preset}'
+        if extension.lower() in [ext.lower() for ext in extensions]:
+            return f'icon-{preset.lower()}'  # Always use lowercase for preset name
+    
+    # Log file formats that didn't get an icon if logging is enabled
+    if LOG_UNDEFINED_FORMATS and extension:
+        log_missing_icon(extension)
+    
     return 'icon-default' if USE_DEFAULT_PRESET else ''  # Use default preset based on setting
 
 def get_directory_size(path, excluded_files=None):
@@ -361,6 +383,10 @@ def generate_html():
     print("Writing HTML file...")
     with open('snap.html', 'w', encoding='utf-8') as f:
         f.write('\n'.join(html_content))
+    
+    # Write missing icons to file if logging is enabled
+    if LOG_UNDEFINED_FORMATS:
+        write_missing_icons_log()
     
     # Print summary of choices
     print("Processing complete!")
