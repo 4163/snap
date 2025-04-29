@@ -88,7 +88,7 @@ This can be found at the generated `📄snap.html`.
 
 Again, this can be found at the generated `📄snap.html`.
 
-*Notice that depending on your text/code editor of choice these contains thousands of text/lines.
+*Notice that depending on your text or code editor, this may display several hundred lines, as these blocks contain thousands of characters.  
 I have provided `📄_empty-script-block.html` files which contains empty script blocks for this purpose.*  
 ![json version](https://i.imgur.com/Io2Ru9o.png)
   
