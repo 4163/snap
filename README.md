@@ -10,9 +10,11 @@ Do not rename `📄snap` when using to avoid having snap.py in listed your file 
 
 `📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
 
-
+##### References:
 [Multi Page - JSON](#multi-page---json)
+
 [Multi Page - DOM](#multi-page---dom)
+
 [Single File - DOM](#single-file---dom)
 
 ### Multi Page - JSON
