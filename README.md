@@ -22,8 +22,8 @@ Do not rename `📄snap` when using to avoid having snap.py in listed your file 
 - (Optional) Access to IdexedDB or In-Memory Cache.
 
 #### 1. Generate JSON and HTML snippets:
-**a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.
-**b.** It will ask if you want to minfy the JS file, choose whichever you prefer (minified JS is smaller in size).
+**a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.  
+**b.** It will ask if you want to minfy the JS file, choose whichever you prefer (minified JS is smaller in size).  
 **c.** After running and going through the setup, this will generate your `📄JSON` file and `📄snap.html` which has HTML snippets.
 
 #### 2. For your individual snap pages:
@@ -69,7 +69,7 @@ Again, this can be found at the generated `📄snap.html`.
 - (Optional) Access to In-Memory Cache.
 
 #### 1. Generate HTML snippet:
-**a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.
+**a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.  
 **b.** After running this will generate your `📄snap.html` which has HTML snippets.
 
 #### 2. For your individual snap pages:
