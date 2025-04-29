@@ -10,7 +10,7 @@ Do not rename `📄snap` when using to avoid having snap.py in listed your file 
 
 `📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
 
-##### References:
+#### References:
 [Multi Page - JSON](#multi-page---json)  
 [Multi Page - DOM](#multi-page---dom)  
 [Single File - DOM](#single-file---dom)  
@@ -21,12 +21,12 @@ Do not rename `📄snap` when using to avoid having snap.py in listed your file 
 - Requires JavaScript.
 - (Optional) Access to IdexedDB or In-Memory Cache.
 
-##### 1. Generate JSON and HTML snippets:
+#### 1. Generate JSON and HTML snippets:
 **a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.
 **b.** It will ask if you want to minfy the JS file, choose whichever you prefer (minified JS is smaller in size).
 **c.** After running and going through the setup, this will generate your `📄JSON` file and `📄snap.html` which has HTML snippets.
 
-##### 2. For your individual snap pages:
+#### 2. For your individual snap pages:
 **a.** Define JSON file location in the HTML head via a `meta` element.  
 ![json file location](https://i.imgur.com/V6yTKih.png)
 
@@ -48,16 +48,16 @@ This can be found at the generated `📄snap.html`.
 
 Again, this can be found at the generated `📄snap.html`.
 	
-##### If a JSON verion is defined:
+#### If a JSON verion is defined:
 - Compare the meta `jsonVersion` with the `📄JSON` file used.
 - If the JSON versions are identical, prevent fetching the `📄JSON` file on page load.
 - If the JSON versions are NOT identical keep fetching the `📄JSON` file on page load.
 - Loop.
 
-##### If a JSON verion is NOT defined:
+#### If a JSON verion is NOT defined:
 - Keep fetching the `📄JSON` file on page load.
     
-##### Directory caching process:
+#### Directory caching process:
 - Once `📄JSON` is fetched tries to save JSON data in IndexedDB and uses that for subsequent navigations;
 - If IndexedDB cannot be accessed use In-Memory Cache for subsequent navigations.
 - If In-Memory Cache fails, do fetch requests to the `📄JSON` file for every action/navigation (Very slow).
@@ -68,11 +68,11 @@ Again, this can be found at the generated `📄snap.html`.
 - Requires JavaScript.
 - (Optional) Access to In-Memory Cache.
 
-##### 1. Generate HTML snippet:
+#### 1. Generate HTML snippet:
 **a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.
 **b.** After running this will generate your `📄snap.html` which has HTML snippets.
 
-##### 2. For your individual snap pages:
+#### 2. For your individual snap pages:
 **a.** Repalce the entire `<div class="header">...</div>` block from your page.  
 ![html header](https://i.imgur.com/7OoFk1S.png)
 
@@ -94,7 +94,7 @@ I have provided `📄_empty-script-block.html` files which contains empty script
   
 ![json version](https://i.imgur.com/TTzumaR.png)
 
-##### Directory caching process:
+#### Directory caching process:
 - If In-Memory Cache fails, script reads from  `<script id="dom-cache" type="application/json">...</script>` for every action/navigation.
 
 ### Single File - DOM
@@ -102,16 +102,16 @@ I have provided `📄_empty-script-block.html` files which contains empty script
 - Not recommended to be used for public websites, less performance and close to zero maintanability/customization.
 - Requires JavaScript.
 
-##### Generate HTML file list
+#### Generate HTML file list
 **-** Copy and run `📄snap.py` to whatever you want to create a file list of.
 
-##### Directory caching process:
+#### Directory caching process:
 - If In-Memory Cache fails, script reads from  `<script id="dom-cache" type="application/json">...</script>` for every action/navigation.
 
 ### Others
 Feel free to edit or mess the CSS/HTML stylings but keep the necessary IDs, classes, and data variables used.
 
-##### Custom icons:
+#### Custom icons:
 On `📄snap-style.css` add a new icon type under the `/*hocchan union archive*/` comment;  
 ![json version](https://i.imgur.com/hHoQoLy.png)
 
