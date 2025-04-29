@@ -8,7 +8,7 @@ The `📄snap.py` scripts are a mess and are patchwork after patchwork, I didn't
 
 Do not rename `📄snap`.py when using to avoid having snap.py in listed your file list output.
 
-`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
+`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
 
 #### References:
 [Multi Page - JSON](#multi-page---json)
@@ -23,7 +23,7 @@ Do not rename `📄snap`.py when using to avoid having snap.py in listed your fi
 
 #### 1. Generate JSON and HTML snippets:
 **a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.  
-**b.** It will ask if you want to minfy the JS file, choose whichever you prefer (minified JS is smaller in size).  
+**b.** It will ask if you want to minify the JS file, choose whichever you prefer (minified JS is smaller in size).  
 **c.** After running and going through the setup, this will generate your `📄JSON` file and `📄snap.html` which has HTML snippets.
 
 #### 2. For your individual snap pages:
@@ -99,7 +99,7 @@ I have provided `📄_empty-script-block.html` files which contains empty script
 
 ### Single File - DOM
 - Recommended to be used for offline snapshots/archives of your file list. 
-- Not recommended to be used for public websites, less performance and close to zero maintanability/customization.
+- Not recommended to be used for public websites, less performance and close to zero maintainability/customization.
 - Requires JavaScript.
 
 #### Generate HTML file list
