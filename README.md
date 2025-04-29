@@ -1,17 +1,17 @@
 # snap
 ## _Create an HTML copy of your file list_
-Take a snapshott folders/files and turn it into a navigatable HTML file list.
+Take a snapshot of folders/files and turn it into a navigatable HTML file list.
 
 Made specifically for my personal use on Windows systems. There are no plans to support other operating systems.
 
 The `📄snap.py` scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the `📄snap-script.js` files are beautifully written, they are awful.
 
-Do not rename `📄snap` when using to avoid having snap.py in listed your file list output.
+Do not rename `📄snap`.py when using to avoid having snap.py in listed your file list output.
 
 `📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
 
 #### References:
-[Multi Page - JSON](#multi-page---json)  
+[Multi Page - JSON](#multi-page---json)
 [Multi Page - DOM](#multi-page---dom)  
 [Single File - DOM](#single-file---dom)  
 
@@ -19,7 +19,7 @@ Do not rename `📄snap` when using to avoid having snap.py in listed your file 
 - Recommended for public websites, has good performance and maintainability
 - Requires the use of a server because CORS policy blocks JSON fetches.
 - Requires JavaScript.
-- (Optional) Access to IdexedDB or In-Memory Cache.
+- (Optional) Access to IndexedDB or In-Memory Cache.
 
 #### 1. Generate JSON and HTML snippets:
 **a.** Copy and run `📄snap.py` to wherever/whatever you want to create a file list of.  
@@ -38,23 +38,23 @@ If no JSON file location is defined, the page will use a fallback JSON file (in 
 
 The JSON version can be found at the generated `📄snap.html`.
 
-**c.** Repalce the entire `<div class="header">...</div>` block from your page.  
+**c.** Replace the entire `<div class="header">...</div>` block from your page.  
 ![html header](https://i.imgur.com/3eRewHH.png)
 
 This can be found at the generated `📄snap.html`.
 
-**d.** Repalce the entire `<ul id="files" class="view-tiles" data-path="root">...</ul>` block from your page.  
+**d.** Replace the entire `<ul id="files" class="view-tiles" data-path="root">...</ul>` block from your page.  
 ![html ul](https://i.imgur.com/sI2L4Fy.png)
 
 Again, this can be found at the generated `📄snap.html`.
 	
-#### If a JSON verion is defined:
+#### If a JSON version is defined:
 - Compare the meta `jsonVersion` with the `📄JSON` file used.
 - If the JSON versions are identical, prevent fetching the `📄JSON` file on page load.
 - If the JSON versions are NOT identical keep fetching the `📄JSON` file on page load.
 - Loop.
 
-#### If a JSON verion is NOT defined:
+#### If a JSON version is NOT defined:
 - Keep fetching the `📄JSON` file on page load.
     
 #### Directory caching process:
@@ -73,17 +73,17 @@ Again, this can be found at the generated `📄snap.html`.
 **b.** After running this will generate your `📄snap.html` which has HTML snippets.
 
 #### 2. For your individual snap pages:
-**a.** Repalce the entire `<div class="header">...</div>` block from your page.  
+**a.** Replace the entire `<div class="header">...</div>` block from your page.  
 ![html header](https://i.imgur.com/7OoFk1S.png)
 
 This can be found at the generated `📄snap.html`.
 
-**b.** Repalce the entire `<ul id="files" class="view-tiles" data-path="root">...</ul>` block from your page.  
+**b.** Replace the entire `<ul id="files" class="view-tiles" data-path="root">...</ul>` block from your page.  
 ![html ul](https://i.imgur.com/5nTlnbO.png)
 
 This can be found at the generated `📄snap.html`.
 
-**c.** Repalce the entire `<script id="dom-cache" type="application/json">...</script>` block from your page.  
+**c.** Replace the entire `<script id="dom-cache" type="application/json">...</script>` block from your page.  
 ![html dom cache/json](https://i.imgur.com/bheLy1k.png)
 
 Again, this can be found at the generated `📄snap.html`.
