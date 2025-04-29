@@ -89,7 +89,7 @@ This can be found at the generated `📄snap.html`.
 Again, this can be found at the generated `📄snap.html`.
 
 *Notice that depending on your text or code editor, this may display several hundred lines, as these blocks contain thousands of characters.  
-I have provided `📄_empty-script-block.html` files which contains empty script blocks for this purpose.*  
+I have provided `📄_empty-script-block.html` files which contain empty script blocks for this purpose.*  
 ![json version](https://i.imgur.com/Io2Ru9o.png)
   
 ![json version](https://i.imgur.com/TTzumaR.png)
@@ -119,10 +119,10 @@ On `📄snap.py` under the `ICON_PRESETS` dictionary define a new icon type with
 ![json version](https://i.imgur.com/yROWc6n.png)
 
 `'A': ['B'],`
-`'A'` is the `'.icon-A'` defined in `📄snap-style.css` with the `.icon-` part omitted.
-And `B` is the file format(s) that will use that icon preset.
+`'A'` is the `.icon-A` defined in `📄snap-style.css` with the `.icon-` part omitted.
+And `'B'` is the file format(s) that will use that icon preset.
 
 By default any file format not defined will have no icon or can be set to use the default icon preset. This can be done in the `📄snap.py` script by changing the `USE_DEFAULT_PRESET` variable to true.  
 ![json version](https://i.imgur.com/osw8i9Z.png)
 
-If you somehow want to edit the HTML/CSS/JS for the *snap Single File - DOM version* (why). The CSS is minfied, just beautify it. And the JS is encoded as Base64, decode that and then beautify it as that is also minfied.
+If you somehow want to edit the HTML/CSS/JS for the *snap Single File - DOM version* (why). The CSS is minified, just beautify it. And the JS is encoded as Base64, decode that and then beautify it as that is also minified.
