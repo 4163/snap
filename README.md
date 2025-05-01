@@ -6,7 +6,7 @@ Made specifically for my personal use on Windows systems. There are no plans to 
 
 The `📄snap.py` scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the `📄snap-script.js` files are beautifully written, they are awful.
 
-Do not rename `📄snap`.py when using to avoid having snap.py in listed your file list output.
+Do not rename `📄snap`.py when using to avoid having *snap.py* in listed your file list output.
 
 `📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required just type `y` to automatically install them and open the file again.
 
