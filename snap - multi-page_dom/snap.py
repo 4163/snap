@@ -31,7 +31,7 @@ import win32api
 
 ###########################################################################################
 
-# Generates a txt file that for file formats that aren't defined
+# Generates a txt file for detected file formats that that did not have a defined icon preset
 LOG_UNDEFINED_FORMATS = False
 
 # Use default icon preset for undefined file types
