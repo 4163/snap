@@ -9,7 +9,7 @@ Take a snapshot of folders/files and turn it into a navigatable HTML file list.
 
 This project is provided as-is. It's primarily built for my workflow, thus Windows only, there are no plans to support other operating systems.
 
-The `📄snap.py` files are a mess and contain a lot of patchwork, I didn't bother properly cleaning as that would require a lot of structure rewrites (in short, they could be more readable and faster). The same can especially be said for the `📄snap-script.js` files, they are awful.
+The `📄snap.py` files are a mess and contain a lot of patchwork (easily can be optimized to run faster). The same can especially be said for the `📄snap-script.js` files, they are awful (I didn't bother properly cleaning as that would require a lot of structure rewrites). 
 
 > Do not rename `📄snap`.py when using to avoid having *snap.py* listed in your file list output.
 
