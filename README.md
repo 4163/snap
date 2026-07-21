@@ -7,13 +7,13 @@
 ## _Create an HTML copy of your file list_
 Take a snapshot of folders/files and turn it into a navigatable HTML file list.
 
-Made specifically for personal use. Windows only, there are no plans to support other operating systems.
+This project is provided as-is. It's primarily built for my workflow, thus Windows only, there are no plans to support other operating systems.
 
-The `📄snap.py` scripts are a mess and are patchwork after patchwork, I didn't bother properly cleaning and doing proper semantics on them (they could be more optimized and faster but meh). It's not as if the `📄snap-script.js` files are good in the first place lol, they are awful.
+The `📄snap.py` files are a mess and contain a lot of patchwork, I didn't bother properly cleaning as that would require a lot of structure rewrites (in short, they could be more readable and faster). The same can especially be said for the `📄snap-script.js` files, they are awful.
 
-Do not rename `📄snap`.py when using to avoid having *snap.py* listed in your file list output.
+> Do not rename `📄snap`.py when using to avoid having *snap.py* listed in your file list output.
 
-`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required, just type `y` to automatically install them and open the file again.
+`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required, just type `y` to automatically install them and re-open the file.
 
 #### References:
 [Multi Page - JSON](#multi-page---json)  
