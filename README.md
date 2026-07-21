@@ -12,8 +12,8 @@ This project is provided as-is. It's primarily built for my workflow, thus Windo
 The `📄snap.py` files are a mess and contain a lot of patchwork (easily can be optimized to run faster). The same can especially be said for the `📄snap-script.js` files, they are awful (I didn't bother properly cleaning as that would require a lot of structure rewrites). 
 
 > Do not rename `📄snap`.py when using to avoid having *snap.py* listed in your file list output.
-
-`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required, just type `y` to automatically install them and re-open the file.
+>
+>`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required, just type `y` to automatically install them and re-open the file.
 
 #### References:
 [Multi Page - JSON](#multi-page---json)  
