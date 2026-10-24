@@ -17,7 +17,7 @@ Coding standards, architecture rules, and agent workflow.
 
 ### Guardrails
 - **No automated git commits.** Never execute git commit commands or automate commits unless explicitly instructed. The user handles all commits manually or through the commit pipeline.
-- **Blast radius.** When modifying shared helpers, configurations, command-line interfaces, or core abstractions, stop and verify that downstream callers and consumers remain unbroken. Do not rely on speculation.
+- **Downstream safety.** When modifying shared helpers, configurations, command-line interfaces, or core abstractions, stop and verify that downstream callers and consumers remain unbroken. Do not rely on speculation.
 - **Respect established structure.** Do not move, rename, or reorganize files, folders, or asset paths. Keep changes localized to the files being edited.
 - **Preserve behavioral contracts.** Refactors must not alter existing functionality, return types, or output schemas unless there is an explicit functional win.
 - **No test harness creation during implementation.** Do not create new test suites or test harnesses while implementation work is in progress. Manual runtime tests carry higher value because test harnesses written against incomplete code are fragile and waste implementation time.
