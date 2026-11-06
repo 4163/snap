@@ -16,8 +16,6 @@ Read agent guidelines and project documentation only. No codebase exploration.
 
 - `.agents/AGENTS.md`
 - `.agents/skills/unslop/SKILL.md`
-- `.agents/skills/validate-changes/SKILL.md`
-- `.agents/skills/verify-implementation/SKILL.md`
 - `README.md` (if present)
 
 Do not read source files, config files, or directory trees.
