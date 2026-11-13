@@ -77,15 +77,18 @@ $(window).on("content loaded", function() {
     let copyDoneTimer = null;
     let copyCleanupFn = null;
 
+    let copyRestoreTimer = null;
+
     function cleanupCopyState() {
         clearTimeout(copyFeedbackTimer);
         clearTimeout(copyDoneTimer);
+        clearTimeout(copyRestoreTimer);
         if (copyCleanupFn) {
             copyCleanupFn();
             copyCleanupFn = null;
         }
-        document.querySelectorAll('#files li.copy-active, #files li.copy-done').forEach(el => {
-            el.classList.remove('copy-active', 'copy-done');
+        document.querySelectorAll('#files li.copy-active, #files li.copy-done, #files li.copy-restore').forEach(el => {
+            el.classList.remove('copy-active', 'copy-done', 'copy-restore');
         });
     }
 
@@ -313,7 +316,24 @@ $(window).on("content loaded", function() {
             row.classList.add('copy-done');
 
             const clearDone = () => {
+                const wasHovered = (() => {
+                    try {
+                        return row.matches(':hover') || row.matches(':focus-within');
+                    } catch (e) {
+                        return false;
+                    }
+                })();
                 row.classList.remove('copy-done');
+                if (wasHovered) {
+                    row.classList.add('copy-restore');
+                    clearTimeout(copyRestoreTimer);
+                    copyRestoreTimer = setTimeout(() => {
+                        row.classList.remove('copy-restore');
+                    }, 250);
+                    row.addEventListener('mouseleave', () => {
+                        row.classList.remove('copy-restore');
+                    }, { once: true });
+                }
                 row.removeEventListener('mouseleave', clearDone);
                 row.removeEventListener('mouseenter', clearDone);
                 row.removeEventListener('mousemove', onMouseMove);

@@ -530,7 +530,7 @@ html:not(.show-size) body.copy-enabled ul#files.view-tiles:not(.show-size) > li 
   cursor: pointer;
   opacity: 0;
   transform: translateY(-50%);
-  transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #files li:hover .copy,
@@ -545,6 +545,11 @@ html:not(.show-size) body.copy-enabled ul#files.view-tiles:not(.show-size) > li 
 #files li.copy-done .copy {
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#files li.copy-restore .copy {
+  transition: opacity 0.2s ease;
 }
 
 #files .copy:hover {
@@ -675,7 +680,9 @@ html:not(.show-size) body.copy-enabled ul#files.view-tiles:not(.show-size) > li 
 
 @media (prefers-reduced-motion: reduce) {
   #files .copy-feedback,
-  #files .copy {
+  #files .copy,
+  #files li.copy-done .copy,
+  #files li.copy-restore .copy {
     transition: none;
   }
 }
