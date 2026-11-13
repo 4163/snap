@@ -1,3 +1,14 @@
+// Synchronously apply session toggle states to <html> to prevent LCP state flicker and FOUC
+try {
+	if (sessionStorage.getItem('showDate') === 'true') {
+		document.documentElement.classList.add('show-date');
+	}
+	if (sessionStorage.getItem('showSize') === 'true') {
+		document.documentElement.classList.add('show-size');
+	}
+	document.documentElement.classList.add('preload');
+} catch (e) {}
+
 function $(t) {
 	var a = "string" == typeof t ? document.getElementById(t) : t;
 	return a.on = function(t, e) {
@@ -44,12 +55,348 @@ $(window).on("content loaded", function() {
     	file: '>*file ', // Search pattern to search for files only
 
 		// In-memory cache enabled by default
-		memoryCache: true
+		memoryCache: true,
+
+		// Copy button
+		copyEnabled: true,
+		copyRootLabel: '~/',
+		copyFeedbackDuration: 1500
     };
 
     // Add a utility function to detect coarse pointer at the top level
     function hasCoarsePointer() {
     	return window.matchMedia('(pointer: coarse)').matches;
+    }
+
+    // Copy button state. The directory index maps folder paths to their directory_id.
+    let indexedDirectoryData = null;
+    const directoryHashByPath = new Map();
+    let rootEntryMap = new Map();
+    let copyFeedback = null;
+    let copyFeedbackTimer = null;
+    let copyDoneTimer = null;
+    let copyCleanupFn = null;
+
+    function cleanupCopyState() {
+        clearTimeout(copyFeedbackTimer);
+        clearTimeout(copyDoneTimer);
+        if (copyCleanupFn) {
+            copyCleanupFn();
+            copyCleanupFn = null;
+        }
+        document.querySelectorAll('#files li.copy-active, #files li.copy-done').forEach(el => {
+            el.classList.remove('copy-active', 'copy-done');
+        });
+    }
+
+    const COPY_CONTROL_HTML = '<span class="copy" role="button" tabindex="0" aria-label="Copy path and hash" title="Copy path and hash">'
+        + '<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+        + '<rect width="14" height="14" x="8" y="8" rx="1" ry="1"/>'
+        + '<path d="M4 16c-.5 0-1-.5-1-1V4c0-.5.5-1 1-1h10c.5 0 1 .5 1 1"/>'
+        + '</svg></span>';
+
+    function escapeHtmlAttr(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function normalizeCopyPath(path) {
+        return String(path || '').replace(/\\/g, '/').replace(/^\.\//, '');
+    }
+
+    function isRootCopyPath(path) {
+        return !path || path === '.' || path === 'root' || path === '~' || path === '~/';
+    }
+
+    function formatCopyDirectoryPath(path) {
+        const rootLabel = CONFIG.copyRootLabel || '~/';
+        if (isRootCopyPath(path)) return rootLabel;
+        const cleaned = normalizeCopyPath(path).replace(/^~\/?/, '').replace(/^\/+/, '').replace(/\/+$/, '');
+        const prefix = rootLabel.endsWith('/') ? rootLabel : `${rootLabel}/`;
+        return cleaned ? `${prefix}${cleaned}` : rootLabel;
+    }
+
+    function indexDirectoryData(data) {
+        if (!data || !data.directories || indexedDirectoryData === data) return;
+
+        directoryHashByPath.clear();
+        rootEntryMap = new Map();
+
+        for (const dirName in data.directories) {
+            const entries = data.directories[dirName];
+            if (!Array.isArray(entries)) continue;
+            for (const entry of entries) {
+                if (entry && entry.type === 'directory' && entry.path && entry.directory_id) {
+                    directoryHashByPath.set(normalizeCopyPath(entry.path), entry.directory_id);
+                }
+            }
+        }
+
+        const rootEntries = data.directories['.'] || data.directories['root'] || [];
+        rootEntries.forEach(entry => {
+            if (entry && entry.name) rootEntryMap.set(entry.name, entry);
+        });
+
+        indexedDirectoryData = data;
+    }
+
+    function getDirectoryHash(folderPath) {
+        if (isRootCopyPath(folderPath)) return '';
+        return directoryHashByPath.get(normalizeCopyPath(folderPath)) || '';
+    }
+
+    function getFolderContext(folderPath) {
+        if (isRootCopyPath(folderPath)) return { folderPath: '', folderHash: '' };
+        const normalized = normalizeCopyPath(folderPath);
+        return { folderPath: normalized, folderHash: getDirectoryHash(normalized) };
+    }
+
+    function getCopyMetaFields(entry, context, fallbackHref) {
+        const isDirectory = entry.type === 'directory';
+        const folderPath = isDirectory
+            ? normalizeCopyPath(entry.path || fallbackHref)
+            : (context && context.folderPath) || '';
+        const folderHash = isDirectory
+            ? (entry.directory_id || getDirectoryHash(folderPath))
+            : (context && context.folderHash) || '';
+        const itemHash = !isDirectory && entry.item_id != null ? String(entry.item_id) : '';
+
+        return { isDirectory, folderPath, folderHash, itemHash };
+    }
+
+    function getCopyAnchorData(entry, context) {
+        if (!CONFIG.copyEnabled || !entry || entry.name === '..') {
+            return { attrs: '', buttonHtml: '' };
+        }
+
+        const { isDirectory, folderPath, folderHash, itemHash } = getCopyMetaFields(entry, context);
+        const attrs = ` data-copy-type="${isDirectory ? 'directory' : 'file'}" data-copy-folder-path="${escapeHtmlAttr(folderPath)}" data-copy-folder-hash="${escapeHtmlAttr(folderHash)}" data-copy-item-hash="${escapeHtmlAttr(itemHash)}"`;
+        return { attrs, buttonHtml: COPY_CONTROL_HTML };
+    }
+
+    function applyCopyMeta(anchor, entry, context) {
+        if (!CONFIG.copyEnabled || !anchor || !entry || entry.name === '..') return;
+
+        const { isDirectory, folderPath, folderHash, itemHash } = getCopyMetaFields(entry, context, anchor.getAttribute('href'));
+
+        anchor.setAttribute('data-copy-type', isDirectory ? 'directory' : 'file');
+        anchor.setAttribute('data-copy-folder-path', folderPath);
+        anchor.setAttribute('data-copy-folder-hash', folderHash);
+        anchor.setAttribute('data-copy-item-hash', itemHash);
+
+        if (!anchor.querySelector('.copy')) {
+            anchor.insertAdjacentHTML('beforeend', COPY_CONTROL_HTML);
+        }
+    }
+
+    function decorateRootCopyRows() {
+        if (!CONFIG.copyEnabled || !rootEntryMap.size) return;
+
+        const container = document.querySelector('[data-path="root"]');
+        if (!container) return;
+
+        container.querySelectorAll('li > a').forEach(anchor => {
+            const name = anchor.getAttribute('title');
+            if (!name || name === '..') return;
+
+            const entry = rootEntryMap.get(name);
+            if (!entry) return;
+
+            applyCopyMeta(anchor, entry, { folderPath: '', folderHash: '' });
+        });
+    }
+
+    function buildCopyPayload(meta) {
+        if (!meta || !meta.type) return '';
+
+        const folderPath = formatCopyDirectoryPath(meta.folderPath);
+        const folderHash = meta.folderHash || '';
+        const folderEntry = folderHash ? `${folderPath} (#${folderHash})` : folderPath;
+
+        if (meta.type !== 'file') return folderEntry;
+
+        const name = meta.name || '';
+        const filePath = folderPath.endsWith('/') ? `${folderPath}${name}` : `${folderPath}/${name}`;
+        let fileHashTag = '';
+        if (folderHash && meta.itemHash) {
+            fileHashTag = `#${folderHash}&item=${meta.itemHash}`;
+        } else if (folderHash) {
+            fileHashTag = `#${folderHash}`;
+        } else if (meta.itemHash) {
+            fileHashTag = `#&item=${meta.itemHash}`;
+        }
+
+        const fileEntry = fileHashTag ? `${filePath} (${fileHashTag})` : filePath;
+        return fileEntry;
+    }
+
+    function getCopyMetaFromElement(element) {
+        if (!element) return null;
+
+        const type = element.getAttribute('data-copy-type');
+        if (!type) return null;
+
+        return {
+            type,
+            name: element.getAttribute('title') || '',
+            folderPath: element.getAttribute('data-copy-folder-path') || '',
+            folderHash: element.getAttribute('data-copy-folder-hash') || '',
+            itemHash: element.getAttribute('data-copy-item-hash') || ''
+        };
+    }
+
+    function legacyCopyText(text) {
+        const activeElement = document.activeElement;
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '0';
+        textarea.style.left = '0';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch (error) {
+            copied = false;
+        }
+
+        document.body.removeChild(textarea);
+        if (activeElement && activeElement.focus) activeElement.focus();
+        return copied;
+    }
+
+    function writeClipboard(text) {
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text)
+                    .then(() => true)
+                    .catch(() => legacyCopyText(text));
+            }
+        } catch (error) {
+            return Promise.resolve(legacyCopyText(text));
+        }
+
+        return Promise.resolve(legacyCopyText(text));
+    }
+
+    function showCopyFeedback(control, success) {
+        const row = control.closest('li');
+        if (!row) return;
+
+        if (!copyFeedback) {
+            copyFeedback = document.createElement('span');
+            copyFeedback.className = 'copy-feedback';
+            copyFeedback.setAttribute('role', 'status');
+            copyFeedback.setAttribute('aria-live', 'polite');
+        }
+
+        cleanupCopyState();
+
+        copyFeedback.classList.remove('show');
+        copyFeedback.classList.toggle('is-error', !success);
+        copyFeedback.textContent = success ? 'Copied' : 'Copy failed';
+
+        row.classList.add('copy-active');
+        const host = row.classList.contains('directory-header')
+            ? (row.querySelector('.directory-header-last') || row)
+            : row;
+        host.appendChild(copyFeedback);
+        void copyFeedback.offsetWidth;
+        copyFeedback.classList.add('show');
+
+        copyFeedbackTimer = setTimeout(() => {
+            copyFeedback.classList.remove('show');
+            row.classList.remove('copy-active');
+            row.classList.add('copy-done');
+
+            const clearDone = () => {
+                row.classList.remove('copy-done');
+                row.removeEventListener('mouseleave', clearDone);
+                row.removeEventListener('mouseenter', clearDone);
+                row.removeEventListener('mousemove', onMouseMove);
+                row.removeEventListener('focusout', clearDone);
+                if (copyCleanupFn === clearDone) {
+                    copyCleanupFn = null;
+                }
+            };
+
+            const onMouseMove = () => {
+                clearDone();
+            };
+
+            copyCleanupFn = clearDone;
+
+            row.addEventListener('mouseleave', clearDone, { once: true });
+            row.addEventListener('mouseenter', clearDone, { once: true });
+            row.addEventListener('focusout', clearDone, { once: true });
+
+            setTimeout(() => {
+                if (row.classList.contains('copy-done')) {
+                    row.addEventListener('mousemove', onMouseMove, { once: true });
+                }
+            }, 250);
+
+            copyDoneTimer = setTimeout(clearDone, 350);
+        }, CONFIG.copyFeedbackDuration);
+    }
+
+    function getCopyTarget(control) {
+        if (!control) return null;
+        if (control.matches && control.matches('.directory-header')) {
+            return control;
+        }
+
+        const anchor = control.closest('a');
+        if (anchor) return anchor;
+
+        const row = control.closest('li');
+        if (!row) return null;
+        if (row.hasAttribute('data-copy-type')) return row;
+        return row.querySelector('[data-copy-type]');
+    }
+
+    function copyFromControl(control) {
+        if (!CONFIG.copyEnabled || !control) return;
+
+        const target = getCopyTarget(control);
+        const meta = getCopyMetaFromElement(target);
+        const payload = meta ? buildCopyPayload(meta) : '';
+
+        if (!payload) {
+            showCopyFeedback(control, false);
+            return;
+        }
+
+        writeClipboard(payload).then(success => {
+            showCopyFeedback(control, success);
+        });
+    }
+
+    function tryHandleCopyEvent(e) {
+        if (!CONFIG.copyEnabled || !e.target) return false;
+
+        const copyControl = e.target.closest && e.target.closest('.copy');
+        if (copyControl) {
+            e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+            if (copyControl.blur) copyControl.blur();
+            copyFromControl(copyControl);
+            return true;
+        }
+
+        const dirHeader = e.target.closest && e.target.closest('.directory-header[data-copy-type]');
+        if (dirHeader) {
+            e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+            if (dirHeader.blur) dirHeader.blur();
+            copyFromControl(dirHeader);
+            return true;
+        }
+
+        return false;
     }
 
     /*
@@ -147,6 +494,8 @@ $(window).on("content loaded", function() {
 		// Only process if Enter or Spacebar is pressed
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 	
+		if (tryHandleCopyEvent(e)) return;
+
 		const target = e.target;
 		// Only process if target matches our selectors
 		if (!target.matches('label, h1 a, li a')) return;
@@ -166,12 +515,22 @@ $(window).on("content loaded", function() {
 	});
 
     document.addEventListener('DOMContentLoaded', function() {
+    	if (CONFIG.copyEnabled) document.body.classList.add('copy-enabled');
+
+    	requestAnimationFrame(function() {
+    		requestAnimationFrame(function() {
+    			document.documentElement.classList.remove('preload');
+    		});
+    	});
+
     	// Initialize folder navigation flag
     	window.isFolderNavigation = false;
     	
     	// Start preloading the JSON data immediately and chain the hash handling
     	preloadDirectoryData()
-    		.then(() => {
+    		.then(data => {
+    			indexDirectoryData(data);
+    			decorateRootCopyRows();
     			// Only handle the hash after preload is complete
     			return handleInitialHash();
     		})
@@ -318,56 +677,51 @@ $(window).on("content loaded", function() {
     	const dateToggle = document.querySelector('.date-toggle');
     	const sizeToggle = document.querySelector('.size-toggle');
 
-    	// Load saved states from sessionStorage
-    	const showDate = sessionStorage.getItem('showDate') === 'true';
-    	const showSize = sessionStorage.getItem('showSize') === 'true';
+    	let showDate = false;
+    	let showSize = false;
+    	try {
+    		showDate = sessionStorage.getItem('showDate') === 'true';
+    		showSize = sessionStorage.getItem('showSize') === 'true';
+    	} catch (e) {}
 
-    	// Set initial states
-    	dateToggle.checked = showDate;
-    	sizeToggle.checked = showSize;
-    	if (showDate) {
-    		disableSliderTransition('slider-date');
-    		filesDiv.classList.add('show-date');
-    	} else {
-    		filesDiv.classList.remove('show-date');
+    	// Set initial states to match documentElement and sessionStorage
+    	if (dateToggle) dateToggle.checked = showDate;
+    	if (sizeToggle) sizeToggle.checked = showSize;
+    	if (filesDiv) {
+    		filesDiv.classList.toggle('show-date', showDate);
+    		filesDiv.classList.toggle('show-size', showSize);
+    	}
+    	document.documentElement.classList.toggle('show-date', showDate);
+    	document.documentElement.classList.toggle('show-size', showSize);
+
+    	if (dateToggle) {
+    		dateToggle.addEventListener('change', function() {
+    			document.documentElement.classList.toggle('show-date', this.checked);
+    			if (filesDiv) filesDiv.classList.toggle('show-date', this.checked);
+    			try {
+    				sessionStorage.setItem('showDate', this.checked);
+    			} catch (e) {}
+    		});
     	}
 
-    	if (showSize) {
-    		disableSliderTransition('slider-size');
-    		filesDiv.classList.add('show-size');
-    	} else {
-    		filesDiv.classList.remove('show-size');
+    	if (sizeToggle) {
+    		sizeToggle.addEventListener('change', function() {
+    			document.documentElement.classList.toggle('show-size', this.checked);
+    			if (filesDiv) filesDiv.classList.toggle('show-size', this.checked);
+    			try {
+    				sessionStorage.setItem('showSize', this.checked);
+    			} catch (e) {}
+    		});
     	}
-
-		function disableSliderTransition(sliderId) {
-			const slider = document.querySelector(`#${sliderId}`);
-			
-			slider.style.transition = '0s';
-			
-			const sliderStyle = document.createElement('style');
-			sliderStyle.textContent = `#${sliderId}::before { transition: 0s }`;
-			document.head.appendChild(sliderStyle);
-			
-			setTimeout(() => {
-				slider.style.removeProperty('transition');
-				document.head.removeChild(sliderStyle);
-			}, 50);
-		}
-
-    	dateToggle.addEventListener('change', function() {
-    		filesDiv.classList.toggle('show-date', this.checked);
-    		sessionStorage.setItem('showDate', this.checked);
-    	});
-
-    	sizeToggle.addEventListener('change', function() {
-    		filesDiv.classList.toggle('show-size', this.checked);
-    		sessionStorage.setItem('showSize', this.checked);
-    	});
 
     	// Helper function to apply toggle classes based on session storage
     	function applyToggleClasses(container) {
-    		const showDate = sessionStorage.getItem('showDate') === 'true';
-    		const showSize = sessionStorage.getItem('showSize') === 'true';
+    		let showDate = false;
+    		let showSize = false;
+    		try {
+    			showDate = sessionStorage.getItem('showDate') === 'true';
+    			showSize = sessionStorage.getItem('showSize') === 'true';
+    		} catch (e) {}
 
     		if (showDate) container.classList.add('show-date');
     		if (showSize) container.classList.add('show-size');
@@ -389,6 +743,8 @@ $(window).on("content loaded", function() {
 
     	// Add click event listener to all directory links
     	document.addEventListener('click', function(e) { // RIPE
+    		if (tryHandleCopyEvent(e)) return;
+
     		const linkElement = e.target.closest('a');
     		if (!linkElement) return;
 
@@ -615,6 +971,7 @@ $(window).on("content loaded", function() {
 
 		// Supposed to be called navigateToFolder but changed it cuz who needs maintainability anyways
     	function RIPE(folderPath) {
+    		cleanupCopyState();
 
     		// Cancel any ongoing batch processing
 			// Supposed to be named cancelBatchProcessing but changed it cuz who needs maintainability anyways
@@ -625,6 +982,9 @@ $(window).on("content loaded", function() {
     			// Fetch the directories.json file
     			fetchDirectoryData()
     				.then(data => {
+    					indexDirectoryData(data);
+    					const copyContext = getFolderContext(folderPath);
+
     					// Update to access directories through the new structure
     					const dirContents = data.directories[folderPath];
     					if (dirContents) {
@@ -663,7 +1023,7 @@ $(window).on("content loaded", function() {
     						nano = false;
 
     						// Update batch processing with configuration
-    						async function processBatch(items, startIndex, container) {
+    						async function processBatch(items, startIndex, container, copyContext) {
     							// Check if processing should be canceled
     							if (nano) {
     								return;
@@ -672,25 +1032,29 @@ $(window).on("content loaded", function() {
     							const batch = items.slice(startIndex, startIndex + CONFIG.batchSize);
     							if (batch.length === 0) return;
 
-    							const batchHTML = batch.map(item => `
+    							const batchHTML = batch.map(item => {
+    								const copyData = getCopyAnchorData(item, copyContext);
+    								return `
                                 <li><a href="${item.type === 'directory' ? item.path : targetPath}" 
                                     class="${item.type === 'directory' ? 'icon icon-directory' : item.icon_classes}" 
-                                    title="${item.name}">
+                                    title="${item.name}"${copyData.attrs}>
                                     <span class="name">${item.name}</span>
                                     <span class="date">${CONFIG.useFormattedDate ? item.date_formatted : item.date}</span>
                                     <span class="size">${CONFIG.useFormattedSize ? item.size_formatted : item.size}</span>
-                                </a></li>`).join('');
+                                    ${copyData.buttonHtml}
+                                </a></li>`;
+    							}).join('');
 
     							container.insertAdjacentHTML('beforeend', batchHTML);
 
     							return new Promise(resolve => {
     								requestAnimationFrame(() => {
-    									resolve(processBatch(items, startIndex + CONFIG.batchSize, container));
+    									resolve(processBatch(items, startIndex + CONFIG.batchSize, container, copyContext));
     								});
     							});
     						}
 
-    						processBatch(dirContents, 0, container).then(() => {
+    						processBatch(dirContents, 0, container, copyContext).then(() => {
     							// Call the search function after content is loaded
     							search();
     							// Resolve the promise when navigation is complete
@@ -724,6 +1088,8 @@ $(window).on("content loaded", function() {
     		// If we're at root, we need to fetch all directories to search
     		return fetchDirectoryData()
     			.then(data => {
+    				indexDirectoryData(data);
+
     				// Check if this search operation has been superseded by a newer one
     				if (currentSearchOperation !== searchOperationCounter) {
     					return;
@@ -876,18 +1242,22 @@ $(window).on("content loaded", function() {
     				'Root Directory' : 
     				dirPath.replace(/\\/g, ' / ').replace(/\//g, '<span> / </span>');
     			
+    			const copyContext = CONFIG.copyEnabled ? getFolderContext(dirPath) : null;
+
     			// Add directory header
     			processQueue.push({
     				isHeader: true,
     				dirPath: dirPath,
-    				content: formattedDirPath
+    				content: formattedDirPath,
+    				copyContext: copyContext
     			});
     			
     			// Add items from this directory
     			groupedItems[dirPath].forEach(item => {
     				processQueue.push({
     					isHeader: false,
-    					item: item
+    					item: item,
+    					copyContext: copyContext
     				});
     			});
     		}
@@ -910,20 +1280,31 @@ $(window).on("content loaded", function() {
     				if (queueItem.isHeader) {
     					const dirHeader = document.createElement('li');
     					dirHeader.className = 'directory-header';
+    					if (CONFIG.copyEnabled && queueItem.copyContext) {
+    						dirHeader.setAttribute('data-copy-type', 'directory');
+    						dirHeader.setAttribute('data-copy-folder-path', queueItem.copyContext.folderPath);
+    						dirHeader.setAttribute('data-copy-folder-hash', queueItem.copyContext.folderHash);
+    						dirHeader.setAttribute('role', 'button');
+    						dirHeader.setAttribute('tabindex', '0');
+    						dirHeader.setAttribute('title', 'Copy path and hash');
+    					}
+    					const lastSpanHtml = `<span class="directory-header-last"> / </span>`;
     					dirHeader.innerHTML = queueItem.content === "." ? 
-    						`~ <span> / </span>` : 
-    						`~ <span> / </span>${queueItem.content}<span> / </span>`;
+    						`~ ${lastSpanHtml}` : 
+    						`~ <span> / </span>${queueItem.content}${lastSpanHtml}`;
     					container.appendChild(dirHeader);
     				} else {
     					const item = queueItem.item;
+    					const copyData = getCopyAnchorData(item, queueItem.copyContext);
     					const li = document.createElement('li');
     					li.innerHTML = `
     						<a href="${item.type === 'directory' ? item.path : item.parentDir}" 
     						   class="${item.type === 'directory' ? 'icon icon-directory' : item.icon_classes}" 
-    						   title="${item.name}">
+    						   title="${item.name}"${copyData.attrs}>
     						   <span class="name">${item.name}</span>
     						   <span class="date">${CONFIG.useFormattedDate ? item.date_formatted : item.date}</span>
     						   <span class="size">${CONFIG.useFormattedSize ? item.size_formatted : item.size}</span>
+    						   ${copyData.buttonHtml}
     						</a>
     					`;
     					container.appendChild(li);
@@ -947,6 +1328,7 @@ $(window).on("content loaded", function() {
     			const container = document.querySelector('[data-path]');
     			container.innerHTML = originalContent;
     			applyToggleClasses(container);
+    			decorateRootCopyRows();
     			search(); // Apply normal search if there's text in the search box
     		} else {
     			// Reload current folder
@@ -956,6 +1338,7 @@ $(window).on("content loaded", function() {
 
     	// Function to reset to root directory
     	function resetToRoot(runSearch = false, fromBreadcrumb = false, fromHashChange = false, highlightItem = false) {
+    		cleanupCopyState();
 			
     		// Clear URL hash using pushState to avoid page jump
     		if (window.location.hash) {
@@ -977,6 +1360,7 @@ $(window).on("content loaded", function() {
     		
     		// Apply toggle classes to the root container
     		applyToggleClasses(container);
+    		decorateRootCopyRows();
     		
 			logPathHistory(fromBreadcrumb ? '🍞' : (fromHashChange ? '#' : '-'));
 
@@ -1267,7 +1651,7 @@ $(window).on("content loaded", function() {
 						return fetchDirectoryData().then(data => {
 							buildPathHistory(path, data, pathHistory);
 							
-							return logPathHistory('#', true, true).then(() => {
+							return logPathHistory('#', true).then(() => {
 								// Navigate to the folder
 								return RIPE(path);
 							});
