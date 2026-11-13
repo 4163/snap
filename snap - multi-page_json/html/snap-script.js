@@ -1,3 +1,14 @@
+// Synchronously apply session toggle states to <html> to prevent LCP state flicker and FOUC
+try {
+	if (sessionStorage.getItem('showDate') === 'true') {
+		document.documentElement.classList.add('show-date');
+	}
+	if (sessionStorage.getItem('showSize') === 'true') {
+		document.documentElement.classList.add('show-size');
+	}
+	document.documentElement.classList.add('preload');
+} catch (e) {}
+
 function $(t) {
 	var a = "string" == typeof t ? document.getElementById(t) : t;
 	return a.on = function(t, e) {
@@ -681,6 +692,12 @@ $(window).on("content loaded", function() {
     document.addEventListener('DOMContentLoaded', function() {
     	if (CONFIG.copyEnabled) document.body.classList.add('copy-enabled');
 
+    	requestAnimationFrame(function() {
+    		requestAnimationFrame(function() {
+    			document.documentElement.classList.remove('preload');
+    		});
+    	});
+
     	// Initialize folder navigation flag
     	window.isFolderNavigation = false;
     	
@@ -832,56 +849,51 @@ $(window).on("content loaded", function() {
     	const dateToggle = document.querySelector('.date-toggle');
     	const sizeToggle = document.querySelector('.size-toggle');
 
-    	// Load saved states from sessionStorage
-    	const showDate = sessionStorage.getItem('showDate') === 'true';
-    	const showSize = sessionStorage.getItem('showSize') === 'true';
+    	let showDate = false;
+    	let showSize = false;
+    	try {
+    		showDate = sessionStorage.getItem('showDate') === 'true';
+    		showSize = sessionStorage.getItem('showSize') === 'true';
+    	} catch (e) {}
 
-    	// Set initial states
-    	dateToggle.checked = showDate;
-    	sizeToggle.checked = showSize;
-    	if (showDate) {
-    		disableSliderTransition('slider-date');
-    		filesDiv.classList.add('show-date');
-    	} else {
-    		filesDiv.classList.remove('show-date');
+    	// Set initial states to match documentElement and sessionStorage
+    	if (dateToggle) dateToggle.checked = showDate;
+    	if (sizeToggle) sizeToggle.checked = showSize;
+    	if (filesDiv) {
+    		filesDiv.classList.toggle('show-date', showDate);
+    		filesDiv.classList.toggle('show-size', showSize);
+    	}
+    	document.documentElement.classList.toggle('show-date', showDate);
+    	document.documentElement.classList.toggle('show-size', showSize);
+
+    	if (dateToggle) {
+    		dateToggle.addEventListener('change', function() {
+    			document.documentElement.classList.toggle('show-date', this.checked);
+    			if (filesDiv) filesDiv.classList.toggle('show-date', this.checked);
+    			try {
+    				sessionStorage.setItem('showDate', this.checked);
+    			} catch (e) {}
+    		});
     	}
 
-    	if (showSize) {
-    		disableSliderTransition('slider-size');
-    		filesDiv.classList.add('show-size');
-    	} else {
-    		filesDiv.classList.remove('show-size');
+    	if (sizeToggle) {
+    		sizeToggle.addEventListener('change', function() {
+    			document.documentElement.classList.toggle('show-size', this.checked);
+    			if (filesDiv) filesDiv.classList.toggle('show-size', this.checked);
+    			try {
+    				sessionStorage.setItem('showSize', this.checked);
+    			} catch (e) {}
+    		});
     	}
-
-		function disableSliderTransition(sliderId) {
-			const slider = document.querySelector(`#${sliderId}`);
-			
-			slider.style.transition = '0s';
-			
-			const sliderStyle = document.createElement('style');
-			sliderStyle.textContent = `#${sliderId}::before { transition: 0s }`;
-			document.head.appendChild(sliderStyle);
-			
-			setTimeout(() => {
-				slider.style.removeProperty('transition');
-				document.head.removeChild(sliderStyle);
-			}, 50);
-		}
-
-    	dateToggle.addEventListener('change', function() {
-    		filesDiv.classList.toggle('show-date', this.checked);
-    		sessionStorage.setItem('showDate', this.checked);
-    	});
-
-    	sizeToggle.addEventListener('change', function() {
-    		filesDiv.classList.toggle('show-size', this.checked);
-    		sessionStorage.setItem('showSize', this.checked);
-    	});
 
     	// Helper function to apply toggle classes based on session storage
     	function applyToggleClasses(container) {
-    		const showDate = sessionStorage.getItem('showDate') === 'true';
-    		const showSize = sessionStorage.getItem('showSize') === 'true';
+    		let showDate = false;
+    		let showSize = false;
+    		try {
+    			showDate = sessionStorage.getItem('showDate') === 'true';
+    			showSize = sessionStorage.getItem('showSize') === 'true';
+    		} catch (e) {}
 
     		if (showDate) container.classList.add('show-date');
     		if (showSize) container.classList.add('show-size');

@@ -156,13 +156,24 @@ label input {
   width: 0;
   height: 0;
 }
-input:checked + .slider {
+input:checked + .slider,
+html.show-date .date-toggle + .slider,
+html.show-size .size-toggle + .slider {
   background-color: #b9b48c;
 }
-input:checked + .slider:before {
+input:checked + .slider:before,
+html.show-date .date-toggle + .slider:before,
+html.show-size .size-toggle + .slider:before {
   -webkit-transform: translateX(18px);
   -ms-transform: translateX(18px);
   transform: translateX(18px);
+}
+html.preload .slider,
+html.preload .slider:before {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
 }
 .slider {
   position: absolute;
@@ -237,7 +248,9 @@ input:checked + .slider:before {
 label:focus-visible span {
   background: #b9b48c;
 }
-label:focus-visible input:checked + .slider {
+label:focus-visible input:checked + .slider,
+html.show-date label:focus-visible .date-toggle + .slider,
+html.show-size label:focus-visible .size-toggle + .slider {
   background: rgba(185, 180, 140, 0.5);
 }
 .directory-path a:focus-visible {
@@ -304,41 +317,58 @@ label:focus-visible input:checked + .slider {
 
 @media (min-width: 769px) {
   #files.show-date > li > a, 
-  #files.show-size > li > a {
+  #files.show-size > li > a,
+  html.show-date #files > li > a,
+  html.show-size #files > li > a {
     display: flex;
     justify-content: space-between;
   }
-  #files.show-date > li > a > .name {
+  #files.show-date > li > a > .name,
+  html.show-date #files > li > a > .name {
     width: 50%;
   }
-  #files.show-date > li > a > .date {
+  #files.show-date > li > a > .date,
+  html.show-date #files > li > a > .date {
     display: block;
     width: 50%;
     text-align: right;
   }
-  #files.show-date > li > a > .size {
+  #files.show-date > li > a > .size,
+  html.show-date #files > li > a > .size {
     display: none;
   }
-  #files.show-size > li > a > .name {
+  #files.show-size > li > a > .name,
+  html.show-size #files > li > a > .name {
     width: 65%;
   }
-  #files.show-size > li > a > .date {
+  #files.show-size > li > a > .date,
+  html.show-size #files > li > a > .date {
     display: none;
   }
-  #files.show-size > li > a > .size {
+  #files.show-size > li > a > .size,
+  html.show-size #files > li > a > .size {
     display: block;
     width:  35%;
     text-align: right;
   }
-  #files.show-date.show-size > li > a > .name {
+  #files.show-date.show-size > li > a > .name,
+  html.show-date.show-size #files > li > a > .name,
+  html.show-date #files.show-size > li > a > .name,
+  html.show-size #files.show-date > li > a > .name {
     width: 41.66%;
   }
-  #files.show-date.show-size > li > a > .date {
+  #files.show-date.show-size > li > a > .date,
+  html.show-date.show-size #files > li > a > .date,
+  html.show-date #files.show-size > li > a > .date,
+  html.show-size #files.show-date > li > a > .date {
     display: block;
     width: 41.66%;
     text-align: right;
   }
-  #files.show-date.show-size > li > a > .size {
+  #files.show-date.show-size > li > a > .size,
+  html.show-date.show-size #files > li > a > .size,
+  html.show-date #files.show-size > li > a > .size,
+  html.show-size #files.show-date > li > a > .size {
     display: block;
     width: 16.66%;
     text-align: right;
@@ -387,13 +417,15 @@ label:focus-visible input:checked + .slider {
     align-items: center;
     gap: 0.5em;
   }
-  #files.show-date > li > a > .date {
+  #files.show-date > li > a > .date,
+  html.show-date #files > li > a > .date {
     display: block !important;
     font-size: 0.7em;
     text-indent: 41px;
     line-height: 1;
   }
-  #files.show-size > li > a > .size {
+  #files.show-size > li > a > .size,
+  html.show-size #files > li > a > .size {
     display: block !important;
     font-size: 0.7em;
     text-indent: 41px;
@@ -442,8 +474,8 @@ body.copy-enabled ul#files li a > span {
   min-width: 0;
 }
 
-body.copy-enabled ul#files.view-tiles:not(.show-date) > li > a > .date,
-body.copy-enabled ul#files.view-tiles:not(.show-size) > li > a > .size {
+html:not(.show-date) body.copy-enabled ul#files.view-tiles:not(.show-date) > li > a > .date,
+html:not(.show-size) body.copy-enabled ul#files.view-tiles:not(.show-size) > li > a > .size {
   display: none;
 }
 
