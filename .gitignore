@@ -10,3 +10,7 @@ undefined_formats.txt
 
 # Note: session-index.md and other .agents/ files are strictly local and intentionally ignored
 .agents/session-index.md
+
+# Credentials and OAuth tokens
+**/.credentials/*.json
+!**/.credentials/.gitkeep

@@ -9,11 +9,11 @@ Take a snapshot of folders/files and turn it into a navigatable HTML file list.
 
 This project is provided as-is. It's primarily built for my workflow, thus Windows only, there are no plans to support other operating systems.
 
-The `📄snap.py` files are a mess and contain a lot of patchwork (easily can be optimized to run faster). The same can especially be said for the `📄snap-script.js` files, they are awful (I didn't bother properly cleaning as that would require a lot of structure rewrites). 
+The `📄snap-script.js` files are awful please don't look at them :p.
 
 > Do not rename `📄snap`.py when using to avoid having *snap.py* listed in your file list output.
->
->`📄snap.py` requires [Python](https://www.python.org/downloads/) to run. No dependencies are required but `tqdm` will be used if it's installed, it provides better user-facing feedback on absurdly large archives.
+
+>`📄snap.py` requires [Python](https://www.python.org/downloads/) to run. Local scans need no dependencies (`tqdm` will be used if it's installed for progress feedback). Cloud scans (Google Drive) require dependencies from `requirements.txt`. Install them via `pip install -r requirements.txt`.
 
 #### References:
 [Multi Page - JSON](#multi-page---json)  
