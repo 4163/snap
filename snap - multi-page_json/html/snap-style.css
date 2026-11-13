@@ -217,14 +217,18 @@ html.preload .slider:before {
   box-shadow: inset 0 0 0 1px #ff79cb;
   color: #ffffff;
 }
+body.copy-enabled .directory-header[data-copy-type] {
+  cursor: pointer;
+  user-select: none;
+}
 .directory-header:hover {
   color: #ebebeb;
 }
-.directory-header span {
+.directory-header span:not(.copy-feedback) {
   all: unset !important;
   color: #555555 !important;
 }
-.directory-header:hover span {
+.directory-header:hover span:not(.copy-feedback) {
   color: #000000 !important;
 }
 @supports (-webkit-hyphens: none) {
@@ -232,6 +236,15 @@ html.preload .slider:before {
     display: flex;
     gap: 0.5ch;
   }
+}
+.directory-header span.directory-header-last {
+  position: relative !important;
+  display: inline-block !important;
+  line-height: inherit !important;
+  vertical-align: top;
+}
+.directory-header .copy-feedback {
+  right: 0 !important;
 }
 
 .drive a:focus-visible {
@@ -296,20 +309,20 @@ html.show-size label:focus-visible .size-toggle + .slider {
     background-color: #e0e0e0;
   }
   .directory-header,
-  .directory-header span {
+  .directory-header span:not(.copy-feedback) {
     user-select: none;
     transition: color 0.2s ease;
   }
   .directory-header:hover {
     color: #ffffff;
   }
-  .directory-header:hover span {
+  .directory-header:hover span:not(.copy-feedback) {
     color: #555555 !important;
   }
   .directory-header:active {
     color: #ebebeb;
   }
-  .directory-header:active span {
+  .directory-header:active span:not(.copy-feedback) {
     color: #000000 !important;
   }
   

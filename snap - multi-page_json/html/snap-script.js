@@ -231,18 +231,18 @@ $(window).on("content loaded", function() {
         return fileEntry;
     }
 
-    function getCopyMetaFromAnchor(anchor) {
-        if (!anchor) return null;
+    function getCopyMetaFromElement(element) {
+        if (!element) return null;
 
-        const type = anchor.getAttribute('data-copy-type');
+        const type = element.getAttribute('data-copy-type');
         if (!type) return null;
 
         return {
             type,
-            name: anchor.getAttribute('title') || '',
-            folderPath: anchor.getAttribute('data-copy-folder-path') || '',
-            folderHash: anchor.getAttribute('data-copy-folder-hash') || '',
-            itemHash: anchor.getAttribute('data-copy-item-hash') || ''
+            name: element.getAttribute('title') || '',
+            folderPath: element.getAttribute('data-copy-folder-path') || '',
+            folderHash: element.getAttribute('data-copy-folder-hash') || '',
+            itemHash: element.getAttribute('data-copy-item-hash') || ''
         };
     }
 
@@ -302,7 +302,10 @@ $(window).on("content loaded", function() {
         copyFeedback.textContent = success ? 'Copied' : 'Copy failed';
 
         row.classList.add('copy-active');
-        row.appendChild(copyFeedback);
+        const host = row.classList.contains('directory-header')
+            ? (row.querySelector('.directory-header-last') || row)
+            : row;
+        host.appendChild(copyFeedback);
         void copyFeedback.offsetWidth;
         copyFeedback.classList.add('show');
 
@@ -342,10 +345,26 @@ $(window).on("content loaded", function() {
         }, CONFIG.copyFeedbackDuration);
     }
 
-    function copyFromControl(control) {
+    function getCopyTarget(control) {
+        if (!control) return null;
+        if (control.matches && control.matches('.directory-header')) {
+            return control;
+        }
+
+        const anchor = control.closest('a');
+        if (anchor) return anchor;
+
         const row = control.closest('li');
-        const anchor = control.closest('a') || (row && row.querySelector('a'));
-        const meta = getCopyMetaFromAnchor(anchor);
+        if (!row) return null;
+        if (row.hasAttribute('data-copy-type')) return row;
+        return row.querySelector('[data-copy-type]');
+    }
+
+    function copyFromControl(control) {
+        if (!CONFIG.copyEnabled || !control) return;
+
+        const target = getCopyTarget(control);
+        const meta = getCopyMetaFromElement(target);
         const payload = meta ? buildCopyPayload(meta) : '';
 
         if (!payload) {
@@ -356,6 +375,28 @@ $(window).on("content loaded", function() {
         writeClipboard(payload).then(success => {
             showCopyFeedback(control, success);
         });
+    }
+
+    function tryHandleCopyEvent(e) {
+        if (!CONFIG.copyEnabled || !e.target) return false;
+
+        const copyControl = e.target.closest && e.target.closest('.copy');
+        if (copyControl) {
+            e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+            copyFromControl(copyControl);
+            return true;
+        }
+
+        const dirHeader = e.target.closest && e.target.closest('.directory-header[data-copy-type]');
+        if (dirHeader) {
+            e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+            copyFromControl(dirHeader);
+            return true;
+        }
+
+        return false;
     }
 
     /*
@@ -664,14 +705,9 @@ $(window).on("content loaded", function() {
 		// Only process if Enter or Spacebar is pressed
 		if (e.key !== 'Enter' && e.key !== ' ') return;
 	
-		const target = e.target;
-		const copyControl = target.closest && target.closest('.copy');
-		if (copyControl) {
-			e.preventDefault();
-			copyFromControl(copyControl);
-			return;
-		}
+		if (tryHandleCopyEvent(e)) return;
 
+		const target = e.target;
 		// Only process if target matches our selectors
 		if (!target.matches('label, h1 a, li a')) return;
 	
@@ -915,13 +951,7 @@ $(window).on("content loaded", function() {
 
     	// Add click event listener to all directory links
     	document.addEventListener('click', function(e) { // RIPE
-    		const copyControl = e.target.closest('.copy');
-    		if (copyControl) {
-    			e.preventDefault();
-    			e.stopPropagation();
-    			copyFromControl(copyControl);
-    			return;
-    		}
+    		if (tryHandleCopyEvent(e)) return;
 
     		const linkElement = e.target.closest('a');
     		if (!linkElement) return;
@@ -1420,15 +1450,16 @@ $(window).on("content loaded", function() {
     				'Root Directory' : 
     				dirPath.replace(/\\/g, ' / ').replace(/\//g, '<span> / </span>');
     			
+    			const copyContext = CONFIG.copyEnabled ? getFolderContext(dirPath) : null;
+
     			// Add directory header
     			processQueue.push({
     				isHeader: true,
     				dirPath: dirPath,
-    				content: formattedDirPath
+    				content: formattedDirPath,
+    				copyContext: copyContext
     			});
     			
-    			const copyContext = getFolderContext(dirPath);
-
     			// Add items from this directory
     			groupedItems[dirPath].forEach(item => {
     				processQueue.push({
@@ -1457,9 +1488,18 @@ $(window).on("content loaded", function() {
     				if (queueItem.isHeader) {
     					const dirHeader = document.createElement('li');
     					dirHeader.className = 'directory-header';
+    					if (CONFIG.copyEnabled && queueItem.copyContext) {
+    						dirHeader.setAttribute('data-copy-type', 'directory');
+    						dirHeader.setAttribute('data-copy-folder-path', queueItem.copyContext.folderPath);
+    						dirHeader.setAttribute('data-copy-folder-hash', queueItem.copyContext.folderHash);
+    						dirHeader.setAttribute('role', 'button');
+    						dirHeader.setAttribute('tabindex', '0');
+    						dirHeader.setAttribute('title', 'Copy path and hash');
+    					}
+    					const lastSpanHtml = `<span class="directory-header-last"> / </span>`;
     					dirHeader.innerHTML = queueItem.content === "." ? 
-    						`~ <span> / </span>` : 
-    						`~ <span> / </span>${queueItem.content}<span> / </span>`;
+    						`~ ${lastSpanHtml}` : 
+    						`~ <span> / </span>${queueItem.content}${lastSpanHtml}`;
     					container.appendChild(dirHeader);
     				} else {
     					const item = queueItem.item;
