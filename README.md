@@ -13,7 +13,7 @@ The `📄snap.py` files are a mess and contain a lot of patchwork (easily can be
 
 > Do not rename `📄snap`.py when using to avoid having *snap.py* listed in your file list output.
 >
->`📄snap.py` requires [Python](https://www.python.org/downloads/) to run, and when running for the first time it may ask you to install some dependencies which are required, just type `y` to automatically install them and re-open the file.
+>`📄snap.py` requires [Python](https://www.python.org/downloads/) to run. No dependencies are required but `tqdm` will be used if it's installed, it provides better user-facing feedback on absurdly large archives.
 
 #### References:
 [Multi Page - JSON](#multi-page---json)  
