@@ -1,37 +1,17 @@
 import os
-import json
-import time
-import threading
-from datetime import datetime
-import subprocess
 import sys
+import json
+import ctypes
+from datetime import datetime
 
-def ensure_package(import_name, pip_name=None):
-    if pip_name is None: pip_name = import_name
-    try: __import__(import_name); return False
-    except ImportError:
-        confirmation = input(f"{pip_name} not found. Install it? (y/n): ")
-        if confirmation.lower() != 'y':
-            print(f"Cannot continue without {pip_name}. Exiting. Press 'Enter' to exit.")
-            input(); sys.exit(1)
-        print(f"Installing {pip_name}...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", pip_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return True
-    
-installed_anything = False
-installed_anything |= ensure_package('tqdm')
-installed_anything |= ensure_package('win32api', 'pywin32')
-
-if installed_anything:
-    input("\nInstallation complete. Please run the script again.\nPress 'Enter' to exit.")
-    sys.exit()
-
-from tqdm import tqdm
-import win32api
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
 
 ###########################################################################################
 
-# Generates a txt file for detected file formats that that did not have a defined icon preset
+# Generates a txt file for detected file formats that did not have a defined icon preset
 LOG_UNDEFINED_FORMATS = False
 
 # Use default icon preset for undefined file types
@@ -60,6 +40,12 @@ ICON_PRESETS = {
     'lossless-alt': ['wav', 'ape', 'ogg', 'wv'],
 }
 
+EXTENSION_TO_PRESET = {
+    ext.lower(): f'icon-{preset.lower()}'
+    for preset, extensions in ICON_PRESETS.items()
+    for ext in extensions
+}
+
 # Keep as false to keep file size low
 JSON_OUTPUT = {
     'keep_raw_date': False,
@@ -68,143 +54,34 @@ JSON_OUTPUT = {
 
 ###########################################################################################
 
-# Set to store unique file extensions without icons
 missing_icons = set()
 
 def log_missing_icon(extension):
-    """Add a file extension to the set of missing icons"""
+    """Add a file extension to the set of missing icons."""
     if extension:
         missing_icons.add(extension)
 
 def write_missing_icons_log():
-    """Write all missing icon extensions to a text file"""
+    """Write all missing icon extensions to a text file."""
     if not missing_icons:
         return
-        
     with open('missing_icons.txt', 'w', encoding='utf-8') as f:
         for ext in sorted(missing_icons):
             f.write(f"{ext}\n")
 
 def get_icon_preset(extension):
-    """Determine the icon preset for a given file extension"""
-    for preset, extensions in ICON_PRESETS.items():
-        if extension.lower() in [ext.lower() for ext in extensions]:
-            return f'icon-{preset.lower()}'  # Always use lowercase for preset name
-    
-    # Log file formats that didn't get an icon if logging is enabled
-    if LOG_UNDEFINED_FORMATS and extension:
+    """Determine the icon preset for a given file extension via fast dictionary lookup."""
+    if not extension:
+        return 'icon-default' if USE_DEFAULT_PRESET else ''
+    preset = EXTENSION_TO_PRESET.get(extension.lower())
+    if preset:
+        return preset
+    if LOG_UNDEFINED_FORMATS:
         log_missing_icon(extension)
-    
-    return 'icon-default' if USE_DEFAULT_PRESET else ''  # Use default preset based on setting
-
-def get_directory_size(path, excluded_files=None):
-    """Calculate total size of a directory including all subdirectories"""
-    if excluded_files is None:
-        excluded_files = []
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(path):
-        filtered_files = [f for f in filenames if f not in excluded_files]
-        for filename in filtered_files:
-            file_path = os.path.join(dirpath, filename)
-            if os.path.isfile(file_path):
-                total_size += os.path.getsize(file_path)
-    return total_size
-
-def get_directory_id(path):
-    """Generate a directory ID based on the full path hierarchy"""
-    if path == "." or path == "..":
-        return ""
-        
-    # Split the path into components
-    parts = path.split(os.sep)
-    if parts[0] == '.':
-        parts = parts[1:]  # Remove the leading '.' if present
-        
-    # Build the ID by tracking level and index for each part
-    current_id = []
-    for level, _ in enumerate(parts):
-        # For each level, we need to find this directory's index among its siblings
-        parent_path = os.path.join(*parts[:level]) if level > 0 else "."
-        siblings = sorted([d for d in os.listdir(parent_path) 
-                         if os.path.isdir(os.path.join(parent_path, d))])
-        index = siblings.index(parts[level])
-        
-        # Generate this level's ID component
-        letter = chr(ord('a') + level)
-        current_id.append(f"{letter}{index + 1}")
-    
-    return "".join(current_id)
-
-def process_directory(path, is_root=False, level=0, index=0):
-    """Process a directory and return its content"""
-    excluded_files = ['snap.py', 'snap.html', 'directories.json'] if is_root else []
-    items = os.listdir(path)
-    
-    if is_root:
-        items = [item for item in items if item not in excluded_files]
-        
-    result = []
-    
-    # Add parent directory entry
-    result.append({
-        "type": "directory",
-        "name": "..",
-        "date": "",
-        "date_formatted": "",
-        "size": "",
-        "size_formatted": "",
-        "path": ".."
-    })
-    
-    # Process directories first
-    for item in sorted(items):
-        full_path = os.path.join(path, item)
-        if os.path.isdir(full_path):
-            mtime = os.path.getmtime(full_path)
-            dir_size = get_directory_size(full_path, excluded_files)
-            relative_path = os.path.relpath(full_path, '.')
-            directory_id = get_directory_id(relative_path) if item != ".." else ""
-            result.append({
-                "type": "directory",
-                "name": item,
-                "date": mtime if mtime else "N/A",
-                "date_formatted": format_date(mtime) if mtime else "N/A",
-                "size": dir_size,
-                "size_formatted": format_size(dir_size),
-                "path": relative_path,
-                "directory_id": directory_id
-            })
-    
-    # Process files
-    file_counter = 1  # Counter for item_id
-    for item in sorted(items):
-        full_path = os.path.join(path, item)
-        if os.path.isfile(full_path):
-            extension = item.split('.')[-1] if '.' in item else ''
-            icon_preset = get_icon_preset(extension)
-            icon_classes = f'icon icon-{extension}'
-            if icon_preset:
-                icon_classes += f' {icon_preset}'
-            
-            file_size = os.path.getsize(full_path)
-            file_date = os.path.getmtime(full_path)
-            
-            result.append({
-                "type": "file",
-                "name": item,
-                "date": file_date if file_date else "N/A",
-                "date_formatted": format_date(file_date) if file_date else "N/A",
-                "size": file_size if file_size else "N/A",
-                "size_formatted": format_size(file_size) if file_size else "N/A",
-                "icon_classes": icon_classes,
-                "item_id": file_counter
-            })
-            file_counter += 1
-    
-    return result
+    return 'icon-default' if USE_DEFAULT_PRESET else ''
 
 def format_size(size):
-    """Convert size in bytes to human readable format with 2 decimal points"""
+    """Convert size in bytes to human readable format with 2 decimal points."""
     if not size:
         return "N/A"
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
@@ -214,91 +91,206 @@ def format_size(size):
     return f"{size:.2f} PB"
 
 def format_date(timestamp):
-    """Convert Unix timestamp to readable date format"""
+    """Convert Unix timestamp to readable date format."""
     if not isinstance(timestamp, (int, float)):
         return "N/A"
-    from datetime import datetime
     return datetime.fromtimestamp(timestamp).strftime('%d/%m/%Y %I:%M %p')
 
-def animate_message(message, stop_event):
-    """Display an animated message with cycling dots until stopped"""
-    while not stop_event.is_set():
-        for i in range(4):
-            if stop_event.is_set():
-                break
-            dots = '.' * i
-            # Print message with varying dots, then return to start of line
-            sys.stdout.write(f"\r{message}{dots}{' ' * (3-i)}")
-            sys.stdout.flush()
-            time.sleep(0.3)
-    # Clear the line for the next message
-    sys.stdout.write("\r" + " " * (len(message) + 3) + "\r")
-    sys.stdout.flush()
+def get_volume_label(drive_path):
+    """Retrieve volume label for a drive using Windows kernel32."""
+    volume_name_buffer = ctypes.create_unicode_buffer(1024)
+    path = drive_path + "\\" if not drive_path.endswith("\\") else drive_path
+    success = ctypes.windll.kernel32.GetVolumeInformationW(
+        ctypes.c_wchar_p(path),
+        volume_name_buffer,
+        ctypes.sizeof(volume_name_buffer),
+        None, None, None, None, 0
+    )
+    return volume_name_buffer.value if success else ""
+
+def scan_tree(root_path, excluded_files, progress_bar=None):
+    """Single-pass recursive directory scan collecting cached stats and cumulative sizes."""
+    total_files = 0
+    total_folders = 0
+
+    def _scan(current_path, rel_path, is_root=False):
+        nonlocal total_files, total_folders
+        if progress_bar is not None:
+            progress_bar.update(1)
+
+        subdirs = []
+        files = []
+        direct_size = 0
+
+        try:
+            entries = list(os.scandir(current_path))
+        except OSError:
+            entries = []
+
+        for entry in entries:
+            name = entry.name
+            if is_root and name in excluded_files:
+                continue
+            try:
+                if entry.is_dir():
+                    try:
+                        mtime = entry.stat().st_mtime
+                    except OSError:
+                        mtime = 0
+                    subdirs.append((name, mtime))
+                elif entry.is_file():
+                    try:
+                        stat = entry.stat()
+                        size = stat.st_size
+                        mtime = stat.st_mtime
+                    except OSError:
+                        size = 0
+                        mtime = 0
+                    direct_size += size
+                    files.append((name, size, mtime))
+                    total_files += 1
+            except OSError:
+                continue
+
+        subdirs.sort(key=lambda x: x[0])
+        files.sort(key=lambda x: x[0])
+
+        node = {
+            'relpath': rel_path,
+            'subdirs': subdirs,
+            'files': files,
+            'direct_size': direct_size,
+            'total_size': direct_size,
+            'children': {}
+        }
+
+        for subdir_name, _ in subdirs:
+            total_folders += 1
+            child_rel = subdir_name if rel_path == '.' else os.path.join(rel_path, subdir_name)
+            child_path = os.path.join(current_path, subdir_name)
+            child_node = _scan(child_path, child_rel, is_root=False)
+            node['children'][subdir_name] = child_node
+            node['total_size'] += child_node['total_size']
+
+        return node
+
+    root_node = _scan(root_path, '.', is_root=True)
+    return root_node, total_files, total_folders
+
+def assemble_directory_data(root_node, version):
+    """Assemble JSON data structure from in-memory tree with top-down ID generation."""
+    keep_raw_date = JSON_OUTPUT['keep_raw_date']
+    keep_raw_size = JSON_OUTPUT['keep_raw_size']
+
+    subdirs_data = {
+        "version": version,
+        "directories": {}
+    }
+
+    def _assemble(node, parent_id="", depth=0, is_root=True):
+        rel_path = node['relpath']
+        letter = chr(ord('a') + depth)
+        items = []
+
+        parent_entry = {
+            "type": "directory",
+            "name": "..",
+            "date_formatted": "",
+            "size_formatted": "",
+            "path": ".."
+        }
+        if is_root or keep_raw_date:
+            parent_entry["date"] = ""
+        if is_root or keep_raw_size:
+            parent_entry["size"] = ""
+        items.append(parent_entry)
+
+        for idx, (subdir_name, mtime) in enumerate(node['subdirs']):
+            child_node = node['children'][subdir_name]
+            child_id = f"{parent_id}{letter}{idx + 1}"
+            child_rel = child_node['relpath']
+            child_size = child_node['total_size']
+
+            dir_entry = {
+                "type": "directory",
+                "name": subdir_name,
+                "date_formatted": format_date(mtime) if mtime else "N/A",
+                "size_formatted": format_size(child_size),
+                "path": child_rel,
+                "directory_id": child_id
+            }
+            if is_root or keep_raw_date:
+                dir_entry["date"] = mtime if mtime else "N/A"
+            if is_root or keep_raw_size:
+                dir_entry["size"] = child_size
+
+            items.append(dir_entry)
+
+        for file_counter, (fname, fsize, fmtime) in enumerate(node['files'], start=1):
+            ext = fname.split('.')[-1] if '.' in fname else ''
+            icon_preset = get_icon_preset(ext)
+            icon_classes = f"icon icon-{ext}"
+            if icon_preset:
+                icon_classes += f" {icon_preset}"
+
+            file_entry = {
+                "type": "file",
+                "name": fname,
+                "date_formatted": format_date(fmtime) if fmtime else "N/A",
+                "size_formatted": format_size(fsize) if fsize else "N/A",
+                "icon_classes": icon_classes,
+                "item_id": file_counter
+            }
+            if is_root or keep_raw_date:
+                file_entry["date"] = fmtime if fmtime else "N/A"
+            if is_root or keep_raw_size:
+                file_entry["size"] = fsize if fsize else "N/A"
+
+            items.append(file_entry)
+
+        subdirs_data["directories"][rel_path] = items
+
+        for idx, (subdir_name, _) in enumerate(node['subdirs']):
+            child_node = node['children'][subdir_name]
+            child_id = f"{parent_id}{letter}{idx + 1}"
+            _assemble(child_node, parent_id=child_id, depth=depth + 1, is_root=False)
+
+    _assemble(root_node, parent_id="", depth=0, is_root=True)
+    return subdirs_data
+
+def get_valid_yes_no(prompt):
+    """Get a valid yes/no response from the user."""
+    while True:
+        response = input(prompt).strip().lower()
+        if response in ['y', 'n']:
+            return response == 'y'
+        print("Invalid input. Please enter 'y' or 'n'.")
 
 def generate_html():
-    """Generate the HTML for root directory and JSON for subdirectories"""
-    excluded_files = ['snap.py', 'snap.html', 'directories.json']
-    
-    # Create a stop event for the animation
-    animation_stop = threading.Event()
-    
-    # Start animation in a separate thread
-    animation_thread = threading.Thread(
-        target=animate_message, 
-        args=("Processing root directory", animation_stop)
-    )
-    animation_thread.daemon = True
-    animation_thread.start()
-    
-    try:
-        # Process root directory with level 0 (will give 'a' prefixed IDs)
-        root_content = process_directory('.', is_root=True, level=0)
-    finally:
-        # Stop the animation
-        animation_stop.set()
-        animation_thread.join()
-    
-    print("Counting directories and files...")
-    
-    # Get script path and extract drive letter and folder name
+    """Scan directories, generate snap.html snippet, and serialize directories.json."""
+    excluded_files = {'snap.py', 'snap.html', 'directories.json'}
+
+    print("Scanning directories...")
+    pbar = tqdm(desc="Scanning directories", unit=" dir") if tqdm is not None else None
+    root_node, total_files, total_folders = scan_tree('.', excluded_files, progress_bar=pbar)
+    if pbar is not None:
+        pbar.close()
+
+    total_size = root_node['total_size']
+    print(f"Processed {total_files} files in {total_folders} folders ({format_size(total_size)}).")
+
     script_path = os.path.abspath(__file__)
     drive_letter, _ = os.path.splitdrive(script_path)
     folder_name = os.path.basename(os.path.dirname(script_path))
-    
-    # Get drive label
-    drive_label = win32api.GetVolumeInformation(drive_letter + "\\")[0]
+    drive_label = get_volume_label(drive_letter + "\\")
     drive_name = drive_letter.rstrip(":\\")
-    
-    # First do a quick walk to count directories for the progress bar
-    print("Calculating statistics...")
-    all_dirs = []
-    for dirpath, dirnames, _ in os.walk('.'):
-        all_dirs.append(dirpath)
-    
-    # Count total files, folders and size
-    total_files = 0
-    total_folders = -1  # Start at -1 to not count the root directory
-    total_size = 0
-    
-    for dirpath, dirnames, filenames in tqdm(os.walk('.'), total=len(all_dirs), desc="Processing directories"):
-        total_folders += len(dirnames)  # Count all subdirectories
-        
-        # Filter out excluded files before counting
-        filtered_files = [f for f in filenames if f not in excluded_files]
-        total_files += len(filtered_files)
-        
-        for filename in filtered_files:
-            file_path = os.path.join(dirpath, filename)
-            if os.path.isfile(file_path):
-                total_size += os.path.getsize(file_path)
-    
-    # Get current date/time in the same format as file dates
+
     date_ran = datetime.now().strftime('%d/%m/%Y %I:%M %p')
-    
-    # Get version timestamp in YYMMDD.HHMM format
     version = datetime.now().strftime('%y%m%d.%H%M')
-    
-    # Initialize html_content with the header
+
+    subdirs_data = assemble_directory_data(root_node, version)
+    root_content = subdirs_data["directories"]["."]
+
     html_content = [f'''    <meta name="jsonVersion" content="{version}">
 
       <div class="header">
@@ -315,99 +307,48 @@ def generate_html():
         </div>
       </div>
 ''']
-    
-    # Add the files list after the header
+
     html_content.append('      <ul id="files" class="view-tiles" data-path="root">')
     for item in root_content:
         if item["type"] == "directory":
-            # Skip the parent directory entry in HTML output
             if item["name"] == "..":
                 continue
-                
             html_content.append(
                 f'        <li><a href="{item["path"]}" class="icon icon-directory" title="{item["name"]}">'
                 f'<span class="name">{item["name"]}</span>'
                 f'<span class="date">{item["date_formatted"]}</span>'
                 f'<span class="size">{item["size_formatted"]}</span></a></li>'
             )
-        else:  # file
-            size_formatted = format_size(item["size"]) if item["size"] != "N/A" else "N/A"
+        else:
             html_content.append(
                 f'        <li><a href="/" class="{item["icon_classes"]}" title="{item["name"]}">'
                 f'<span class="name">{item["name"]}</span>'
                 f'<span class="date">{item["date_formatted"]}</span>'
-                f'<span class="size">{size_formatted}</span></a></li>'
+                f'<span class="size">{item["size_formatted"]}</span></a></li>'
             )
     html_content.append('      </ul>')
     html_content.append('')
-    
-    # Write HTML to file
+
     print("Writing HTML file...")
     with open('snap.html', 'w', encoding='utf-8') as f:
         f.write('\n'.join(html_content))
-    
-    # Get minify preference (only ask for this one)
+
     print("\nOutput preferences:")
-    
-    def get_valid_yes_no(prompt):
-        """Get a valid yes/no response from the user"""
-        while True:
-            response = input(prompt).lower()
-            if response in ['y', 'n']:
-                return response == 'y'
-            print("Invalid input. Please enter 'y' or 'n'.")
-    
-    # Use constants for date and size preferences
-    keep_raw_date = JSON_OUTPUT['keep_raw_date']
-    keep_raw_size = JSON_OUTPUT['keep_raw_size']
-    
-    # Only ask for minify preference
     should_minify = get_valid_yes_no("Would you like to minify the JSON output? (y/n): ")
-    
-    # Process and store subdirectories in JSON
-    subdirs_data = {
-        "version": version,
-        "directories": {}
-    }
-    
-    # Start with level 1 for actual subdirectories
-    current_level = 1
-    # Add the root directory to the JSON data
-    subdirs_data["directories"]["."] = root_content
-    
-    # Process remaining directories with progress bar
-    print("Processing subdirectories...")
-    remaining_dirs = [d for d in all_dirs if d != '.']
-    for root in tqdm(remaining_dirs, desc="Creating JSON data"):
-        directory_content = process_directory(root, level=current_level)
-        current_level += 1
-        
-        # Remove unneeded fields based on user preferences
-        for item in directory_content:
-            if not keep_raw_date and "date" in item:
-                del item["date"]
-            if not keep_raw_size and "size" in item:
-                del item["size"]
-        
-        subdirs_data["directories"][os.path.relpath(root, '.')] = directory_content
-    
-    # Write JSON to file
+
     print("Writing JSON file...")
     with open('directories.json', 'w', encoding='utf-8') as f:
         if should_minify:
             json.dump(subdirs_data, f, separators=(',', ':'))
         else:
             json.dump(subdirs_data, f, indent=2)
-    
-    # Print summary of choices
+
     print(f"\n- JSON format: {'minified' if should_minify else 'pretty printed'}")
     print("\nProcessing complete!")
-    
-    # Write missing icons to file if logging is enabled
+
     if LOG_UNDEFINED_FORMATS:
         write_missing_icons_log()
-    
-    # Final message and wait for user to press Enter
+
     print("\nDone!\nPress 'Enter' to exit.")
     input()
 
