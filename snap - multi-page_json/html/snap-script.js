@@ -384,6 +384,7 @@ $(window).on("content loaded", function() {
         if (copyControl) {
             e.preventDefault();
             if (e.stopPropagation) e.stopPropagation();
+            if (copyControl.blur) copyControl.blur();
             copyFromControl(copyControl);
             return true;
         }
@@ -392,6 +393,7 @@ $(window).on("content loaded", function() {
         if (dirHeader) {
             e.preventDefault();
             if (e.stopPropagation) e.stopPropagation();
+            if (dirHeader.blur) dirHeader.blur();
             copyFromControl(dirHeader);
             return true;
         }
