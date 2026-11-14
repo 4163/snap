@@ -150,6 +150,7 @@ label {
   width: 36px;
   height: 18px;
   min-width: 36px;
+  user-select: none;
 }
 label input {
   opacity: 0;
