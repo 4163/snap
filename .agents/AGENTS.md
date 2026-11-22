@@ -5,6 +5,13 @@ Coding standards, architecture rules, and agent workflow.
 ## Code guidelines
 - **Self-documenting code.** Write code that reads clearly on its own. Use descriptive names and flat control flow (early returns over multi-layer nesting). Keep comments minimal and concise. Reserve them for *why*, non-obvious constraints, and maintained module invariants. A short local heading is fine when a file needs to explain an ownership, lifecycle, or persistence rule. Do not add commentary that merely narrates the code.
 - **Performance first.** Avoid dynamic evaluations and allocations in hot paths. Cache aggressively.
+  *Practical examples for agents (match the pattern to local and Google Drive snapshot scanning):*
+  1. **Strict field projection.** Request only `nextPageToken, files(id, name, mimeType, size, modifiedTime)` on `files.list` and `id, name, mimeType` on `files.get`. Never omit `fields` or fetch full Drive metadata payloads.
+  2. **Max page size.** Paginate `files.list` with `pageSize=1000` and exhaust `nextPageToken` to minimize API round-trips.
+  3. **Thread-local Drive clients with bounded concurrency.** Build one `drive` v3 service per worker thread via `threading.local()` with `cache_discovery=False` under `ThreadPoolExecutor(max_workers=8)`. Never share a service instance across threads or rebuild clients per folder.
+  4. **Cycle-safe single-visit traversal.** Track `visited_folder_ids` so shortcuts or repeated folder IDs are never re-fetched or infinitely traversed.
+  5. **Single-pass local scans.** Collect stats and cumulative folder sizes in one `os.scandir` pass (`scan_tree`) without re-statting or walking trees twice. Keep local scans stdlib-only (`tqdm` optional; Drive packages only for cloud scans).
+  6. **Read-only scope and Shared Drive flags.** Keep `SCOPES` at `drive.readonly` and pass `supportsAllDrives=True` and `includeItemsFromAllDrives=True` consistently so shared drives do not silently drop items.
 - **Measure twice, cut once.** Read the surrounding code, verify assumptions, and trace downstream impact before editing so changes land cleanly on the first pass. Prefer small, deliberate changes over broad refactors.
 - **Reuse existing helpers.** Before writing new logic, search the codebase for an existing helper that already does the job. Prefer intuitive shared helpers over inlining repeated lines of code for identical operations. If a change duplicates logic across callsites, extract it into a shared helper instead.
 - **Work in logical slices.** Prioritize small, precise code changes rather than big blocks to prevent tooling and scope failures, especially during large refactors. Be surgical!
