@@ -16,9 +16,18 @@ The `📄snap-script.js` files are awful please don't look at them :p.
 >`📄snap.py` requires [Python](https://www.python.org/downloads/) to run. Local scans need no dependencies (`tqdm` will be used if it's installed for progress feedback). Cloud scans (Google Drive) require dependencies from `requirements.txt`. Install them via `pip install -r requirements.txt`.
 
 #### References:
-[Multi Page - JSON](#multi-page---json)  
-[Multi Page - DOM](#multi-page---dom)  
-[Single File - DOM](#single-file---dom)
+[Cloud - Google Drive](#cloud---google-drive) ··· [Multi Page - JSON](#multi-page---json) ··· [Multi Page - DOM](#multi-page---dom) ··· [Single File - DOM](#single-file---dom)
+
+### Cloud - Google Drive
+- Works with all three variants below.
+- Accepts Service Account and Desktop app credentials from Google Cloud Console. Web application credentials won't work.
+
+#### Workflow:
+**a.** Put your Google Cloud credential `📄JSON` file inside the `.credentials/` folder.  
+**b.** Run `📄snap.py`. When it finds credentials in `.credentials/`, it will ask which one to use, or let you scan the local directory instead.  
+**c.** If you're using a Desktop app credential, `📄snap.py` copies the auth URL to your clipboard on the first run. Paste it in your browser to sign in, and it saves the token inside `.credentials/` for next time. It then asks for a Google Drive folder URL/ID directly.  
+**d.** If you're using a Service Account credential, `📄snap.py` lists folders shared with the service account so you can pick one, or paste a Google Drive folder URL/ID.  
+**e.** Once you pick a folder, it scans the Drive folder and generates the appropriate `📄JSON` / `📄snap.html`, or the single `📄snap_cloud.html` file.
 
 ### Multi Page - JSON
 - Recommended for public websites, has good performance and maintainability
@@ -131,4 +140,4 @@ And `'B'` is the file format(s) that will use that icon preset.
 By default any file format not defined will have no icon or can be set to use the default icon preset. This can be done in the `📄snap.py` script by changing the `USE_DEFAULT_PRESET` variable to true.  
 ![json version](https://i.imgur.com/osw8i9Z.png)
 
-If you somehow want to edit the HTML/CSS/JS for the *snap Single File - DOM version* (why). The CSS is minified, just beautify it. And the JS is encoded as Base64, decode that and then beautify it as that is also minified, or alternatively just use/edit the Multi Page - DOM JS and Base64 encode it as that uses the same JS script.
+If you somehow want to edit the HTML/CSS/JS of *Single File - DOM* (why). The CSS is minified, just tidy that, and the JS is encoded in Base64, either decode that and then tidy. OR alternatively just use/edit the *Multi Page - DOM* CSS/JS.
